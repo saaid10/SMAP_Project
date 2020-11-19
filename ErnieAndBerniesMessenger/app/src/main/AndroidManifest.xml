@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.ernieandbernie.messenger">
 
     <application
@@ -9,13 +10,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ErnieAndBerniesMessenger">
-        <activity android:name="com.ernieandbernie.messenger.MainActivity">
+        <activity android:name=".Activity.FriendListActivity"></activity>
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.ernieandbernie.messenger.Activity.FriendListActivity"
+            tools:ignore="DuplicateActivity" />
     </application>
 
 </manifest>
