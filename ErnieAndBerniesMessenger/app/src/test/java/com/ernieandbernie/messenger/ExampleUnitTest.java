@@ -1,4 +1,4 @@
-package com.example.ebsmessenger;
+package com.ernieandbernie.messenger;
 
 import org.junit.Test;
 

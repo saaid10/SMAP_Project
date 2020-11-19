@@ -1,4 +1,4 @@
-package com.example.ebsmessenger;
+package com.ernieandbernie.messenger;
 
 import androidx.appcompat.app.AppCompatActivity;
 
