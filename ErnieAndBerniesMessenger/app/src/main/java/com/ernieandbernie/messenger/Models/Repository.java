@@ -5,10 +5,10 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.ernieandbernie.messenger.Util.Constants;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -17,11 +17,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class Repository {
     private static final String TAG = "Repository";
+
     private static volatile Repository INSTANCE;
     private final FirebaseDatabase database;
     private final DatabaseReference databaseReference;
@@ -49,7 +51,7 @@ public class Repository {
         loadUser();
 
         // This is test stuff
-        databaseReference.child("users").child(user.getUid()).child("friends").orderByChild("displayName").equalTo("123").addListenerForSingleValueEvent(new ValueEventListener() {
+        databaseReference.child(Constants.USERS).child(user.getUid()).child(Constants.FRIENDS).orderByChild(Constants.DISPLAY_NAME).equalTo("123").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
@@ -60,10 +62,10 @@ public class Repository {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                makeToast(error.getMessage());
             }
         });
-        databaseReference.child("users").orderByChild("latitude").startAt(56.1731682 - 1).endAt(56.1731682 + 1).addListenerForSingleValueEvent(new ValueEventListener() {
+        databaseReference.child(Constants.USERS).orderByChild(Constants.LATITUDE).startAt(56.1731682 - 1).endAt(56.1731682 + 1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
@@ -74,26 +76,26 @@ public class Repository {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                makeToast(error.getMessage());
             }
         });
     }
 
     public void updateCurrentUserLocationInDB(LatLng latLng) {
         Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("latitude", latLng.latitude);
-        childUpdates.put("longitude", latLng.longitude);
-        databaseReference.child("users").child(user.getUid()).updateChildren(childUpdates);
+        childUpdates.put(Constants.LATITUDE, latLng.latitude);
+        childUpdates.put(Constants.LONGITUDE, latLng.longitude);
+        databaseReference.child(Constants.USERS).child(user.getUid()).updateChildren(childUpdates);
     }
 
     public void setCurrentUserDisplayName() {
         Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("displayName", user.getDisplayName());
-        databaseReference.child("users").child(user.getUid()).updateChildren(childUpdates);
+        childUpdates.put(Constants.DISPLAY_NAME, user.getDisplayName());
+        databaseReference.child(Constants.USERS).child(user.getUid()).updateChildren(childUpdates);
     }
 
     public void loadUser() {
-        databaseReference.child("users").child(user.getUid()).addValueEventListener(new ValueEventListener() {
+        databaseReference.child(Constants.USERS).child(user.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
@@ -102,7 +104,7 @@ public class Repository {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(context.getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
+                makeToast(error.getMessage());
             }
         });
     }
@@ -116,5 +118,9 @@ public class Repository {
 
     public FirebaseUser getCurrentFirebaseUser() {
         return user;
+    }
+
+    private void makeToast(String text) {
+        Toast.makeText(context.getApplicationContext(), text, Toast.LENGTH_LONG).show();
     }
 }

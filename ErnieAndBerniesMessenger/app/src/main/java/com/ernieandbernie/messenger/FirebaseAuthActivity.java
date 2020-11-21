@@ -47,7 +47,7 @@ public class FirebaseAuthActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK) {
                     // Successfully signed in
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    Toast.makeText(getApplicationContext(), "Welcome! " + user.getDisplayName(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.welcome) + user.getDisplayName(), Toast.LENGTH_LONG).show();
                     Repository.getInstance(getApplicationContext()).setCurrentUserDisplayName();
                     startActivity(new Intent(FirebaseAuthActivity.this, FriendListActivity.class));
                     finish();
