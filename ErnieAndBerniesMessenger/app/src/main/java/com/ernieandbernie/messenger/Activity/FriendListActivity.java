@@ -4,14 +4,17 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ernieandbernie.messenger.Models.Repository;
+import com.ernieandbernie.messenger.Models.User;
 import com.ernieandbernie.messenger.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -20,6 +23,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 public class FriendListActivity extends AppCompatActivity {
 
+    private static final String TAG = "FriendListActivity";
     private Repository repository;
     private FusedLocationProviderClient fusedLocationProviderClient;
 
@@ -45,8 +49,7 @@ public class FriendListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friendlist);
-        repository = Repository.getInstance(getApplicationContext());
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        setup();
         updateCurrentUserLocationInDB();
     }
 
@@ -67,7 +70,16 @@ public class FriendListActivity extends AppCompatActivity {
 
 
     private void setup() {
+        repository = Repository.getInstance(getApplicationContext());
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
         RecyclerView recyclerView = findViewById(R.id.rcView);
         //  final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, new MessengerListAdapter.OnMessengerClickListener())
+        repository.getCurrentUser().observe(this, new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                Log.d(TAG, "onChanged: " + user);
+            }
+        });
     }
 }

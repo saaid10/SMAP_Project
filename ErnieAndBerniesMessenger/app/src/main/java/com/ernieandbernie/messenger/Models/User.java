@@ -2,17 +2,20 @@ package com.ernieandbernie.messenger.Models;
 
 import java.util.List;
 
-public class Messenger {
+public class User {
     public List<Friend> friends;
     public Double latitude;
     public Double longitude;
+    public String displayName;
 
-    public Messenger() { }
+    public User() {
+    }
 
-    public Messenger(List<Friend> friends, Double latitude, Double longitude) {
+    public User(String displayName, List<Friend> friends, Double latitude, Double longitude) {
         this.friends = friends;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.displayName = displayName;
     }
 
     public List<Friend> getFriends() {
