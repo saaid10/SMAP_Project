@@ -1,6 +1,7 @@
 package com.ernieandbernie.messenger.Models;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -10,6 +11,9 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.ernieandbernie.messenger.Util.Constants;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -17,6 +21,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,10 +34,11 @@ public class Repository {
     private static volatile Repository INSTANCE;
     private final FirebaseDatabase database;
     private final DatabaseReference databaseReference;
-    private final FirebaseUser user;
-    private Context context;
+    private final StorageReference storageReference;
+    private final FirebaseUser firebaseUser;
+    private final Context context;
 
-    private MutableLiveData<User> currentUser = new MutableLiveData<>();
+    private MutableLiveData<User> applicationUser = new MutableLiveData<>();
 
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
@@ -44,14 +52,15 @@ public class Repository {
     }
 
     private Repository(Context application) {
-        this.context = application;
+        context = application.getApplicationContext();
         database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference();
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        loadUser();
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        storageReference = FirebaseStorage.getInstance().getReference().child(firebaseUser.getUid());
+        loadApplicationUser();
 
         // This is test stuff
-        databaseReference.child(Constants.USERS).child(user.getUid()).child(Constants.FRIENDS).orderByChild(Constants.DISPLAY_NAME).equalTo("123").addListenerForSingleValueEvent(new ValueEventListener() {
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).child(Constants.FRIENDS).orderByChild(Constants.DISPLAY_NAME).equalTo("123").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
@@ -85,21 +94,21 @@ public class Repository {
         Map<String, Object> childUpdates = new HashMap<>();
         childUpdates.put(Constants.LATITUDE, latLng.latitude);
         childUpdates.put(Constants.LONGITUDE, latLng.longitude);
-        databaseReference.child(Constants.USERS).child(user.getUid()).updateChildren(childUpdates);
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).updateChildren(childUpdates);
     }
 
     public void setCurrentUserDisplayName() {
         Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put(Constants.DISPLAY_NAME, user.getDisplayName());
-        databaseReference.child(Constants.USERS).child(user.getUid()).updateChildren(childUpdates);
+        childUpdates.put(Constants.DISPLAY_NAME, firebaseUser.getDisplayName());
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).updateChildren(childUpdates);
     }
 
-    public void loadUser() {
-        databaseReference.child(Constants.USERS).child(user.getUid()).addValueEventListener(new ValueEventListener() {
+    public void loadApplicationUser() {
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
-                currentUser.postValue(user);
+                applicationUser.postValue(user);
             }
 
             @Override
@@ -109,18 +118,51 @@ public class Repository {
         });
     }
 
-    public LiveData<User> getCurrentUser() {
-        if (currentUser == null) {
-            currentUser = new MutableLiveData<>();
+    public LiveData<User> getApplicationUser() {
+        if (applicationUser == null) {
+            applicationUser = new MutableLiveData<>();
         }
-        return currentUser;
+        return applicationUser;
     }
 
-    public FirebaseUser getCurrentFirebaseUser() {
-        return user;
+    public FirebaseUser getFirebaseUser() {
+        return firebaseUser;
     }
 
     private void makeToast(String text) {
-        Toast.makeText(context.getApplicationContext(), text, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+    }
+
+    public void uploadProfilePicture(Uri data) {
+        UploadTask uploadTask = storageReference.child(Constants.PROFILE_PICTURE).putFile(data);
+        uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    Log.d(TAG, "onComplete: " + downloadUri);
+                    updateStorageUriOnUser(downloadUri);
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
+
+    public void updateStorageUriOnUser(Uri downloadUri) {
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put(Constants.STORAGE_URI, downloadUri.toString());
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).updateChildren(childUpdates);
     }
 }

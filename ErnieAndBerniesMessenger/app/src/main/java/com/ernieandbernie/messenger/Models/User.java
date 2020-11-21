@@ -7,15 +7,17 @@ public class User {
     public Double latitude;
     public Double longitude;
     public String displayName;
+    public String storageUri;
 
     public User() {
     }
 
-    public User(String displayName, List<Friend> friends, Double latitude, Double longitude) {
+    public User(String displayName, List<Friend> friends, Double latitude, Double longitude, String storageUri) {
         this.friends = friends;
         this.latitude = latitude;
         this.longitude = longitude;
         this.displayName = displayName;
+        this.storageUri = storageUri;
     }
 
     public List<Friend> getFriends() {
@@ -40,6 +42,22 @@ public class User {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getStorageUri() {
+        return storageUri;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setStorageUri(String storageUri) {
+        this.storageUri = storageUri;
     }
 }
 
