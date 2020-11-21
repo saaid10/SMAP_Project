@@ -63,6 +63,20 @@ public class Repository {
 
             }
         });
+        databaseReference.child("users").orderByChild("latitude").startAt(56.1731682 - 1).endAt(56.1731682 + 1).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    User user = dataSnapshot.getValue(User.class);
+                }
+                Log.d(TAG, "onDataChange: " + snapshot);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     public void updateCurrentUserLocationInDB(LatLng latLng) {
