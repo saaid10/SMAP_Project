@@ -1,8 +1,5 @@
 package com.ernieandbernie.messenger.Models;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
 import java.util.List;
 
 public class Messenger {
