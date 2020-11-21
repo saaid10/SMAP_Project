@@ -29,6 +29,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FriendListActivity extends AppCompatActivity {
 
@@ -99,9 +101,12 @@ public class FriendListActivity extends AppCompatActivity {
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    Messenger messenger = new Messenger(Collections.singletonList(new Friend("123", "3DsCbONOiKeAkA1NyCHakNkNxIo1")), location.getLatitude(), location.getLongitude());
-
-                    databaseReference.child("users").child(user.getUid()).setValue(messenger);
+                    //Messenger messenger = new Messenger(Collections.singletonList(new Friend("123", "3DsCbONOiKeAkA1NyCHakNkNxIo1")), location.getLatitude(), location.getLongitude());
+                    // databaseReference.child("users").child(user.getUid()).setValue(messenger);
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put("latitude", location.getLatitude());
+                    childUpdates.put("longitude", location.getLongitude());
+                    databaseReference.child("users").child(user.getUid()).updateChildren(childUpdates);
                 }
             });
         } else {
