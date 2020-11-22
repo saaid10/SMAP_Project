@@ -30,7 +30,7 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
     @NonNull
     @Override
     public MessengerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = layoutInflater.inflate(R.layout.activity_friendlist, parent, false);
+        View itemView = layoutInflater.inflate(R.layout.activity_list_item, parent, false);
         return new MessengerViewHolder(itemView);
     }
 

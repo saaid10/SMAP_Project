@@ -15,9 +15,7 @@
         android:theme="@style/Theme.ErnieAndBerniesMessenger">
 
         <activity android:name=".Activity.FriendListActivity" />
-        <activity android:name=".MainActivity"/>
-
-        <activity android:name=".FirebaseAuthActivity">
+        <activity android:name=".Activity.FirebaseAuthActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

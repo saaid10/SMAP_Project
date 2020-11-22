@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -29,6 +31,10 @@ public class FriendListActivity extends AppCompatActivity {
     private static final String TAG = "FriendListActivity";
     private Repository repository;
     private FusedLocationProviderClient fusedLocationProviderClient;
+
+
+    // View bindings
+    private Button btnProfilePic, btnAddFriends;
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog. Save the return value, an instance of
@@ -66,9 +72,6 @@ public class FriendListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_friendlist);
         setup();
         updateCurrentUserLocationInDB();
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType(Constants.CONTENT_TYPE_IMAGE);
-        pickImageLauncher.launch(intent);
     }
 
     private void updateCurrentUserLocationInDB() {
@@ -91,6 +94,23 @@ public class FriendListActivity extends AppCompatActivity {
         repository = Repository.getInstance(getApplicationContext());
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
+        // View Bindings
+        btnProfilePic = findViewById(R.id.btnProfilePic);
+        btnAddFriends = findViewById(R.id.btnAddFriends);
+        btnProfilePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickImage();
+            }
+        });
+        btnAddFriends.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO:
+            }
+        });
+
+
         RecyclerView recyclerView = findViewById(R.id.rcView);
         //  final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, new MessengerListAdapter.OnMessengerClickListener())
         repository.getApplicationUser().observe(this, new Observer<User>() {
@@ -99,5 +119,11 @@ public class FriendListActivity extends AppCompatActivity {
                 Log.d(TAG, "onChanged: " + user);
             }
         });
+    }
+
+    private void pickImage() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType(Constants.CONTENT_TYPE_IMAGE);
+        pickImageLauncher.launch(intent);
     }
 }

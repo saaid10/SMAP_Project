@@ -1,4 +1,4 @@
-package com.ernieandbernie.messenger;
+package com.ernieandbernie.messenger.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,8 +11,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.ernieandbernie.messenger.Activity.FriendListActivity;
 import com.ernieandbernie.messenger.Models.Repository;
+import com.ernieandbernie.messenger.R;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
