@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.R;
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -32,6 +33,13 @@ public class FirebaseAuthActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_firebase_auth);
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            startActivity(new Intent(FirebaseAuthActivity.this, FriendListActivity.class));
+            finish();
+        } else {
+            createSignInIntent();
+        }
         createSignInIntent();
     }
 
@@ -57,10 +65,14 @@ public class FirebaseAuthActivity extends AppCompatActivity {
                     // response.getError().getErrorCode() and handle the error.
 
                     if (response == null) {
-                        finish();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "" + response.getError().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), R.string.sign_in_cancelled, Toast.LENGTH_LONG).show();
+                        return;
                     }
+                    if (response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
+                        Toast.makeText(getApplicationContext(), R.string.no_internet_connection, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    Toast.makeText(getApplicationContext(), "" + response.getError().getLocalizedMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -71,6 +83,7 @@ public class FirebaseAuthActivity extends AppCompatActivity {
                 .setIsSmartLockEnabled(false)
                 .setLogo(R.drawable.ic_launcher_foreground)      // Set logo drawable
                 .setTheme(R.style.Theme_ErnieAndBerniesMessenger)
+                .setAlwaysShowSignInMethodScreen(true)
                 .build());
     }
 
