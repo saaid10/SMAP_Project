@@ -4,4 +4,7 @@
     <string name="welcome">"Velkommen! "</string>
     <string name="changeProfilePicture">Skift profil billede</string>
     <string name="addFriends">Tilføj venner</string>
+    <string name="signOut">Log ud</string>
+    <string name="no_internet_connection">Ingen internet forbindelse</string>
+    <string name="sign_in_cancelled">Log ind afbrudt</string>
 </resources>
