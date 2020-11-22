@@ -25,7 +25,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Repository {
@@ -39,6 +42,7 @@ public class Repository {
     private final Context context;
 
     private MutableLiveData<User> applicationUser = new MutableLiveData<>();
+    private MutableLiveData<List<User>> usersCloseTo;
 
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
@@ -64,21 +68,7 @@ public class Repository {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
-                }
-                Log.d(TAG, "onDataChange: " + snapshot);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                makeToast(error.getMessage());
-            }
-        });
-        databaseReference.child(Constants.USERS).orderByChild(Constants.LATITUDE).startAt(56.1731682 - 1).endAt(56.1731682 + 1).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
+                    User user = createUserFromSnapshot(dataSnapshot);
                 }
                 Log.d(TAG, "onDataChange: " + snapshot);
             }
@@ -107,8 +97,7 @@ public class Repository {
         databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                applicationUser.postValue(user);
+                applicationUser.postValue(createUserFromSnapshot(snapshot));
             }
 
             @Override
@@ -116,6 +105,12 @@ public class Repository {
                 makeToast(error.getMessage());
             }
         });
+    }
+
+    private User createUserFromSnapshot(DataSnapshot snapshot) {
+        User user = snapshot.getValue(User.class);
+        user.uid = snapshot.getKey();
+        return user;
     }
 
     public LiveData<User> getApplicationUser() {
@@ -164,5 +159,31 @@ public class Repository {
         Map<String, Object> childUpdates = new HashMap<>();
         childUpdates.put(Constants.STORAGE_URI, downloadUri.toString());
         databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).updateChildren(childUpdates);
+    }
+
+    private void loadUsersCloseToUser() {
+        databaseReference.child(Constants.USERS).orderByChild(Constants.LATITUDE).startAt(getApplicationUser().getValue().latitude - 1).endAt(getApplicationUser().getValue().latitude + 1).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<User> users = new ArrayList<>();
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    users.add(createUserFromSnapshot(dataSnapshot));
+                }
+                usersCloseTo.postValue(users);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                makeToast(error.getMessage());
+            }
+        });
+    }
+
+    public LiveData<List<User>> getUsersCloseTo() {
+        if (usersCloseTo == null) {
+            usersCloseTo = new MutableLiveData<>();
+            loadUsersCloseToUser();
+        }
+        return usersCloseTo;
     }
 }

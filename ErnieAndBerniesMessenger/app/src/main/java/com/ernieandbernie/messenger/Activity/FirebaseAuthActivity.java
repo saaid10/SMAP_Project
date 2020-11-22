@@ -29,6 +29,41 @@ public class FirebaseAuthActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 123;
     private static final String TAG = "FirebaseAuthActivity";
 
+    private final ActivityResultLauncher<Intent> authUILauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+        @Override
+        public void onActivityResult(ActivityResult result) {
+            IdpResponse response = IdpResponse.fromResultIntent(result.getData());
+
+            if (result.getResultCode() == RESULT_OK) {
+                // Successfully signed in
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                Toast.makeText(getApplicationContext(), getString(R.string.welcome) + " " + user.getDisplayName(), Toast.LENGTH_LONG).show();
+
+                // When user created, set displayName in DB
+                if (user.getMetadata().getCreationTimestamp() == user.getMetadata().getLastSignInTimestamp()) {
+                    Repository.getInstance(getApplicationContext()).setCurrentUserDisplayName();
+                }
+
+                startActivity(new Intent(FirebaseAuthActivity.this, FriendListActivity.class));
+                finish();
+            } else {
+                // Sign in failed. If response is null the user canceled the
+                // sign-in flow using the back button. Otherwise check
+                // response.getError().getErrorCode() and handle the error.
+
+                if (response == null) {
+                    Toast.makeText(getApplicationContext(), R.string.sign_in_cancelled, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
+                    Toast.makeText(getApplicationContext(), R.string.no_internet_connection, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                Toast.makeText(getApplicationContext(), "" + response.getError().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+    });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,42 +75,11 @@ public class FirebaseAuthActivity extends AppCompatActivity {
         } else {
             createSignInIntent();
         }
-        createSignInIntent();
     }
 
     public void createSignInIntent() {
         List<AuthUI.IdpConfig> providers = Collections.singletonList(
                 new AuthUI.IdpConfig.EmailBuilder().build());
-
-        ActivityResultLauncher<Intent> authUILauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-            @Override
-            public void onActivityResult(ActivityResult result) {
-                IdpResponse response = IdpResponse.fromResultIntent(result.getData());
-
-                if (result.getResultCode() == RESULT_OK) {
-                    // Successfully signed in
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    Toast.makeText(getApplicationContext(), getString(R.string.welcome) + user.getDisplayName(), Toast.LENGTH_LONG).show();
-                    Repository.getInstance(getApplicationContext()).setCurrentUserDisplayName();
-                    startActivity(new Intent(FirebaseAuthActivity.this, FriendListActivity.class));
-                    finish();
-                } else {
-                    // Sign in failed. If response is null the user canceled the
-                    // sign-in flow using the back button. Otherwise check
-                    // response.getError().getErrorCode() and handle the error.
-
-                    if (response == null) {
-                        Toast.makeText(getApplicationContext(), R.string.sign_in_cancelled, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    if (response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
-                        Toast.makeText(getApplicationContext(), R.string.no_internet_connection, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    Toast.makeText(getApplicationContext(), "" + response.getError().getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                }
-            }
-        });
 
         authUILauncher.launch(AuthUI.getInstance()
                 .createSignInIntentBuilder()

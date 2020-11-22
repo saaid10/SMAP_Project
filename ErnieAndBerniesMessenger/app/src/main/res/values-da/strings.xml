@@ -7,4 +7,6 @@
     <string name="signOut">Log ud</string>
     <string name="no_internet_connection">Ingen internet forbindelse</string>
     <string name="sign_in_cancelled">Log ind afbrudt</string>
+    <string name="you_are_here">Du er her!</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

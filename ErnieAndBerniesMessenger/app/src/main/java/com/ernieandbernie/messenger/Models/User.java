@@ -1,5 +1,7 @@
 package com.ernieandbernie.messenger.Models;
 
+import com.google.firebase.database.Exclude;
+
 import java.util.List;
 
 public class User {
@@ -8,6 +10,9 @@ public class User {
     public Double longitude;
     public String displayName;
     public String storageUri;
+
+    @Exclude
+    public String uid;
 
     public User() {
     }
@@ -59,5 +64,6 @@ public class User {
     public void setStorageUri(String storageUri) {
         this.storageUri = storageUri;
     }
+
 }
 

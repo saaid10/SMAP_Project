@@ -100,9 +100,9 @@ public class FriendListActivity extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     Intent intent = new Intent(FriendListActivity.this, FirebaseAuthActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
-                    finish();
+                    // finish();
                 }
             });
             return true;
@@ -146,6 +146,7 @@ public class FriendListActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // TODO:
+                startActivity(new Intent(FriendListActivity.this, MapsActivity.class));
             }
         });
 
