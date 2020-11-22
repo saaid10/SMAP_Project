@@ -8,4 +8,10 @@
     <string name="signOut">Sign out</string>
     <string name="title_activity_maps">Map</string>
     <string name="you_are_here">You are here!</string>
+    <string name="send_friend_request">Send friend request?</string>
+    <string name="friend_request_dialog">Would you like to send a friend request to %s?</string>
+    <string name="yes">Yes!</string>
+    <string name="no">No…</string>
+    <string name="new_friend_request">New friend request</string>
+    <string name="new_friend_request_content">You have a new friend request from %s, would you like to accept?</string>
 </resources>

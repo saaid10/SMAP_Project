@@ -9,4 +9,8 @@
     <string name="sign_in_cancelled">Log ind afbrudt</string>
     <string name="you_are_here">Du er her!</string>
     <string name="title_activity_maps">Map</string>
+    <string name="send_friend_request">Send venneanmodning?</string>
+    <string name="friend_request_dialog">Vil du gerne sende en venneanmodning til %s?</string>
+    <string name="no">Nej…</string>
+    <string name="yes">Ja!</string>
 </resources>

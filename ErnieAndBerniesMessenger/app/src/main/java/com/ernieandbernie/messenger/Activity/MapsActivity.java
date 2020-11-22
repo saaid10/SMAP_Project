@@ -65,20 +65,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                Toast.makeText(getApplicationContext(), (String) marker.getTag(), Toast.LENGTH_SHORT).show();
+                // Don't send friend request to yourself...
+                if (((String) marker.getTag()).equals(repository.getApplicationUser().getValue().uid))
+                    return false;
+
+
                 new AlertDialog.Builder(MapsActivity.this)
-                        .setTitle("Send Friend request?")
-                        .setMessage("Would you like to send a friend request to " + marker.getTitle() + "?")
-                        .setPositiveButton("Yes!", new DialogInterface.OnClickListener() {
+                        .setTitle(R.string.send_friend_request)
+                        .setMessage(getString(R.string.friend_request_dialog, marker.getTitle()))
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
+                                repository.sendFriendRequest((String) marker.getTag());
                             }
                         })
-                        .setNegativeButton("No!", new DialogInterface.OnClickListener() {
+                        .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
+                                // Do nothing
                             }
                         })
                         .show();

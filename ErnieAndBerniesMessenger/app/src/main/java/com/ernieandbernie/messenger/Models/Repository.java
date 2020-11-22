@@ -26,7 +26,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +42,7 @@ public class Repository {
 
     private MutableLiveData<User> applicationUser = new MutableLiveData<>();
     private MutableLiveData<List<User>> usersCloseTo;
+    private MutableLiveData<List<Request>> friendRequests;
 
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
@@ -93,7 +93,7 @@ public class Repository {
         databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).updateChildren(childUpdates);
     }
 
-    public void loadApplicationUser() {
+    private void loadApplicationUser() {
         databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -116,6 +116,7 @@ public class Repository {
     public LiveData<User> getApplicationUser() {
         if (applicationUser == null) {
             applicationUser = new MutableLiveData<>();
+            loadApplicationUser();
         }
         return applicationUser;
     }
@@ -185,5 +186,44 @@ public class Repository {
             loadUsersCloseToUser();
         }
         return usersCloseTo;
+    }
+
+    public void sendFriendRequest(String requestUid) {
+        databaseReference.child("requests").child(requestUid).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
+    }
+
+    public void setupFriendRequests() {
+        databaseReference.child("requests").child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Request> requests = new ArrayList<>();
+
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Request request = new Request();
+                    request.requestFromUid = child.getKey();
+                    request.requestFromDisplayName = (String) child.getValue();
+                    requests.add(request);
+                }
+
+                friendRequests.postValue(requests);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    public LiveData<List<Request>> getFriendRequests() {
+        if (friendRequests == null) {
+            friendRequests = new MutableLiveData<>();
+            setupFriendRequests();
+        }
+        return friendRequests;
+    }
+
+    public DatabaseReference getProfileUrlByUid(String requestFromUid) {
+        return databaseReference.child(Constants.USERS).child(requestFromUid).child(Constants.STORAGE_URI);
     }
 }

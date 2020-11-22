@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.User;
 import com.ernieandbernie.messenger.R;
+import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -83,6 +84,7 @@ public class FriendListActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         setup();
         updateCurrentUserLocationInDB();
+        startService(new Intent(this, MessengerService.class));
     }
 
     @Override
