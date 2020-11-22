@@ -1,11 +1,21 @@
 package com.ernieandbernie.messenger.Activity;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Observer;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.User;
 import com.ernieandbernie.messenger.R;
@@ -13,6 +23,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -47,7 +59,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         // Add a marker in Sydney and move the camera
         moveCamera();
         addPotentialFriendsToMap();
@@ -55,6 +66,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public boolean onMarkerClick(Marker marker) {
                 Toast.makeText(getApplicationContext(), (String) marker.getTag(), Toast.LENGTH_SHORT).show();
+                new AlertDialog.Builder(MapsActivity.this)
+                        .setTitle("Send Friend request?")
+                        .setMessage("Would you like to send a friend request to " + marker.getTitle() + "?")
+                        .setPositiveButton("Yes!", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .setNegativeButton("No!", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .show();
                 return false;
             }
         });
@@ -68,18 +95,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 for (User user : users) {
                     LatLng userLocation = new LatLng(user.latitude, user.longitude);
                     if (user.uid.equals(repository.getApplicationUser().getValue().uid)) {
-                        mMap.addMarker(new MarkerOptions().position(userLocation).title(getString(R.string.you_are_here))).setTag(user.uid);
+                        addMarker(user, getString(R.string.you_are_here), userLocation);
                     } else {
-                        mMap.addMarker(new MarkerOptions().position(userLocation).title(user.displayName)).setTag(user.uid);
+                        addMarker(user, user.displayName, userLocation);
                     }
                 }
             }
         });
     }
 
+    private void addMarker(User user, String title, LatLng userLocation) {
+        Marker marker = mMap.addMarker(new MarkerOptions().position(userLocation).title(title));
+        marker.setTag(user.uid);
+        loadMarkerIcon(user.storageUri, marker);
+    }
+
     private void moveCamera() {
         User user = repository.getApplicationUser().getValue();
         LatLng userLocation = new LatLng(user.latitude, user.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13));
+    }
+
+    private void loadMarkerIcon(String url, final Marker marker) {
+        Glide.with(this).asBitmap().placeholder(R.drawable.ic_launcher_foreground).fitCenter().load(url).into(new CustomTarget<Bitmap>(90, 90) {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resource);
+                marker.setIcon(icon);
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_launcher_foreground));
+            }
+        });
     }
 }
