@@ -39,7 +39,7 @@ public class FirebaseAuthActivity extends AppCompatActivity {
         List<AuthUI.IdpConfig> providers = Collections.singletonList(
                 new AuthUI.IdpConfig.EmailBuilder().build());
 
-        ActivityResultLauncher<Intent> launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+        ActivityResultLauncher<Intent> authUILauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
             @Override
             public void onActivityResult(ActivityResult result) {
                 IdpResponse response = IdpResponse.fromResultIntent(result.getData());
@@ -65,7 +65,7 @@ public class FirebaseAuthActivity extends AppCompatActivity {
             }
         });
 
-        launcher.launch(AuthUI.getInstance()
+        authUILauncher.launch(AuthUI.getInstance()
                 .createSignInIntentBuilder()
                 .setAvailableProviders(providers)
                 .setIsSmartLockEnabled(false)
