@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "872001179847-md6ihf7lhmesio9tjmiav0hbujb7b26e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ernieandbernie.messenger",
+            "certificate_hash": "5d9bb25514fe10018e008351baa1975807b65c2e"
+          }
+        },
+        {
           "client_id": "872001179847-joq5k5p2l27o8ivehrc5hmrlagojtgv0.apps.googleusercontent.com",
           "client_type": 3
         }
