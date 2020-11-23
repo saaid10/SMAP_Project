@@ -80,7 +80,7 @@ public class FriendListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friendlist);
 
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        Toolbar myToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         setup();
         updateCurrentUserLocationInDB();
@@ -101,6 +101,8 @@ public class FriendListActivity extends AppCompatActivity {
             AuthUI.getInstance().signOut(getApplicationContext()).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
+                    stopService(new Intent(FriendListActivity.this, MessengerService.class));
+                    repository.clearRepository();
                     Intent intent = new Intent(FriendListActivity.this, FirebaseAuthActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

@@ -13,4 +13,8 @@
     <string name="friend_request_dialog">Vil du gerne sende en venneanmodning til %s?</string>
     <string name="no">Nej…</string>
     <string name="yes">Ja!</string>
+    <string name="new_friend_request">Ny venneanmodning</string>
+    <string name="new_friend_request_content">Du har en ny venneanmodning fra %s, vil du gerne acceptere?</string>
+    <string name="accept">Accepter</string>
+    <string name="decline">Afslå</string>
 </resources>

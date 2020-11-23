@@ -14,4 +14,5 @@ public class Constants {
     public static final String ACTION_NO = "com.ernieandbernie.messenger.action_no";
     public static final String REQUEST_FROM_UID = "request_from_uid";
     public static final String NOTIFICATION_ID_EXTRA = "notification_id_extra";
+    public static final String REQUESTS = "requests";
 }

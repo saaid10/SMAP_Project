@@ -29,7 +29,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -66,7 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public boolean onMarkerClick(Marker marker) {
                 // Don't send friend request to yourself...
-                if (((String) marker.getTag()).equals(repository.getApplicationUser().getValue().uid))
+                if (marker.getTag().equals(repository.getFirebaseUser().getUid()))
                     return false;
 
 
@@ -96,14 +99,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onChanged(List<User> users) {
                 mMap.clear();
-                for (User user : users) {
-                    LatLng userLocation = new LatLng(user.latitude, user.longitude);
-                    if (user.uid.equals(repository.getApplicationUser().getValue().uid)) {
-                        addMarker(user, getString(R.string.you_are_here), userLocation);
-                    } else {
-                        addMarker(user, user.displayName, userLocation);
+                if (users.isEmpty()) return;
+                repository.getApplicationUser().observe(MapsActivity.this, new Observer<User>() {
+                    @Override
+                    public void onChanged(User applicationUser) {
+                        removeObserver();
+                        Set<String> friendIds = applicationUser.friends.keySet();
+                        for (User user : users) {
+                            if (friendIds.contains(user.uid)) {
+                                continue;
+                            }
+                            LatLng userLocation = new LatLng(user.latitude, user.longitude);
+                            if (user.uid.equals(applicationUser.uid)) {
+                                addMarker(user, getString(R.string.you_are_here), userLocation);
+                            } else {
+                                addMarker(user, user.displayName, userLocation);
+                            }
+                        }
                     }
-                }
+                });
             }
         });
     }
@@ -115,13 +129,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void moveCamera() {
-        User user = repository.getApplicationUser().getValue();
-        LatLng userLocation = new LatLng(user.latitude, user.longitude);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13));
+        repository.getApplicationUser().observe(this, (applicationUser) -> {
+            removeObserver();
+            LatLng userLocation = new LatLng(applicationUser.latitude, applicationUser.longitude);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13));
+        });
     }
 
     private void loadMarkerIcon(String url, final Marker marker) {
-        Glide.with(this).asBitmap().placeholder(R.drawable.ic_launcher_foreground).fitCenter().load(url).into(new CustomTarget<Bitmap>(90, 90) {
+        Glide.with(this).asBitmap().fitCenter().load(url).into(new CustomTarget<Bitmap>(90, 90) {
             @Override
             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                 BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resource);
@@ -130,8 +146,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void onLoadCleared(@Nullable Drawable placeholder) {
-                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.ic_launcher_foreground));
+            }
+
+            @Override
+            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                super.onLoadFailed(errorDrawable);
+                marker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round));
             }
         });
+    }
+
+    private void removeObserver() {
+        repository.getApplicationUser().removeObservers(this);
     }
 }

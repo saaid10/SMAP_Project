@@ -9,6 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.ernieandbernie.messenger.Models.CallbackInterfaces.GetDisplayNameByUidCallback;
+import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Continuation;
@@ -189,11 +191,11 @@ public class Repository {
     }
 
     public void sendFriendRequest(String requestUid) {
-        databaseReference.child("requests").child(requestUid).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
+        databaseReference.child(Constants.REQUESTS).child(requestUid).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
     }
 
     public void setupFriendRequests() {
-        databaseReference.child("requests").child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
+        databaseReference.child(Constants.REQUESTS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Request> requests = new ArrayList<>();
@@ -226,4 +228,38 @@ public class Repository {
     public DatabaseReference getProfileUrlByUid(String requestFromUid) {
         return databaseReference.child(Constants.USERS).child(requestFromUid).child(Constants.STORAGE_URI);
     }
+
+    public void getDisplayNameByUid(String uid, GetDisplayNameByUidCallback callback) {
+        databaseReference.child(Constants.USERS).child(uid).child(Constants.DISPLAY_NAME).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                callback.callback(snapshot.getValue(String.class));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    public void addNewFriend(String newFriendUid, String newFriendDisplayName) {
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).child(Constants.FRIENDS).child(newFriendUid).setValue(newFriendDisplayName);
+
+        databaseReference.child(Constants.USERS).child(newFriendUid).child(Constants.FRIENDS).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
+
+        deleteFriendRequest(newFriendUid);
+    }
+
+    public void deleteFriendRequest(String requestFromUid) {
+        databaseReference.child(Constants.REQUESTS).child(firebaseUser.getUid()).child(requestFromUid).removeValue();
+    }
+
+    public void clearRepository() {
+        friendRequests = new MutableLiveData<>();
+        usersCloseTo = new MutableLiveData<>();
+        applicationUser = new MutableLiveData<>();
+        INSTANCE = null;
+    }
 }
+

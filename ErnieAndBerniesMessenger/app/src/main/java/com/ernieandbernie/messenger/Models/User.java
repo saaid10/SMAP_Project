@@ -2,10 +2,11 @@ package com.ernieandbernie.messenger.Models;
 
 import com.google.firebase.database.Exclude;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class User {
-    public List<Friend> friends;
+    public HashMap<String, String> friends;
     public Double latitude;
     public Double longitude;
     public String displayName;
@@ -17,7 +18,7 @@ public class User {
     public User() {
     }
 
-    public User(String displayName, List<Friend> friends, Double latitude, Double longitude, String storageUri) {
+    public User(String displayName, HashMap<String, String> friends, Double latitude, Double longitude, String storageUri) {
         this.friends = friends;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -25,11 +26,11 @@ public class User {
         this.storageUri = storageUri;
     }
 
-    public List<Friend> getFriends() {
+    public HashMap<String, String> getFriends() {
         return friends;
     }
 
-    public void setFriends(List<Friend> friends) {
+    public void setFriends(HashMap<String, String> friends) {
         this.friends = friends;
     }
 
