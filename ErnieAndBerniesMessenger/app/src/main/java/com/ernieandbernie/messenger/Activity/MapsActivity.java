@@ -2,19 +2,24 @@ package com.ernieandbernie.messenger.Activity;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Observer;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.User;
@@ -29,8 +34,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +42,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private Repository repository;
+    private HashMap<String, Marker> markers = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,12 +103,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         repository.getUsersCloseTo().observe(this, new Observer<List<User>>() {
             @Override
             public void onChanged(List<User> users) {
-                mMap.clear();
-                if (users.isEmpty()) return;
+                if (users.isEmpty()) {
+                    clearMarkers();
+                    return;
+                }
                 repository.getApplicationUser().observe(MapsActivity.this, new Observer<User>() {
                     @Override
                     public void onChanged(User applicationUser) {
-                        removeObserver();
+                        clearMarkers();
                         Set<String> friendIds = applicationUser.friends.keySet();
                         for (User user : users) {
                             if (friendIds.contains(user.uid)) {
@@ -120,6 +127,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 });
             }
         });
+    }
+
+    private void clearMarkers() {
+        if (!markers.isEmpty()) {
+            for (Marker marker : markers.values()) {
+                marker.remove();
+            }
+        }
     }
 
     private void addMarker(User user, String title, LatLng userLocation) {
@@ -140,23 +155,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Glide.with(this).asBitmap().fitCenter().load(url).into(new CustomTarget<Bitmap>(90, 90) {
             @Override
             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                if (marker.getTag() == null) return;
                 BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resource);
                 marker.setIcon(icon);
+                markers.put((String) marker.getTag(), marker);
             }
 
             @Override
             public void onLoadCleared(@Nullable Drawable placeholder) {
+                if (marker.getTag() == null) return;
             }
 
             @Override
             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                 super.onLoadFailed(errorDrawable);
-                marker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round));
+                if (marker.getTag() == null) return;
+                try {
+                    BitmapDescriptor markerIcon = getBitmapDescriptor(R.drawable.ic_default_user);
+                    marker.setIcon(markerIcon);
+                } catch (Exception e) {
+                    Log.d("HEKJ", "onLoadFailed: " + e.getLocalizedMessage());
+                }
+                markers.put((String) marker.getTag(), marker);
             }
         });
     }
 
     private void removeObserver() {
         repository.getApplicationUser().removeObservers(this);
+    }
+
+
+    // https://gist.github.com/Ozius/1ef2151908c701854736
+    private BitmapDescriptor getBitmapDescriptor(int id) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            VectorDrawable vectorDrawable = (VectorDrawable) ContextCompat.getDrawable(getApplicationContext(), id);
+
+            int h = vectorDrawable.getIntrinsicHeight();
+            int w = vectorDrawable.getIntrinsicWidth();
+
+            vectorDrawable.setBounds(0, 0, w, h);
+
+            Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bm);
+            vectorDrawable.draw(canvas);
+
+            return BitmapDescriptorFactory.fromBitmap(bm);
+
+        } else {
+            return BitmapDescriptorFactory.fromResource(id);
+        }
     }
 }

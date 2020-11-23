@@ -66,7 +66,7 @@ public class Repository {
         database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference();
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        storageReference = FirebaseStorage.getInstance().getReference().child(firebaseUser.getUid());
+        storageReference = FirebaseStorage.getInstance().getReference();
         loadApplicationUser();
     }
 
@@ -102,6 +102,7 @@ public class Repository {
     private User createUserFromSnapshot(DataSnapshot snapshot) {
         User user = snapshot.getValue(User.class);
         user.uid = snapshot.getKey();
+        user.friends = user.friends != null ? user.friends : new HashMap<>();
         return user;
     }
 
@@ -122,7 +123,7 @@ public class Repository {
     }
 
     public void uploadProfilePicture(Uri data) {
-        UploadTask uploadTask = storageReference.child(Constants.PROFILE_PICTURE).putFile(data);
+        UploadTask uploadTask = storageReference.child(firebaseUser.getUid()).child(Constants.PROFILE_PICTURE).putFile(data);
         uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
             @Override
             public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
@@ -131,14 +132,13 @@ public class Repository {
                 }
 
                 // Continue with the task to get the download URL
-                return storageReference.getDownloadUrl();
+                return storageReference.child(firebaseUser.getUid()).child(Constants.PROFILE_PICTURE).getDownloadUrl();
             }
         }).addOnCompleteListener(new OnCompleteListener<Uri>() {
             @Override
             public void onComplete(@NonNull Task<Uri> task) {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
-                    Log.d(TAG, "onComplete: " + downloadUri);
                     updateStorageUriOnUser(downloadUri);
                 } else {
                     // Handle failures

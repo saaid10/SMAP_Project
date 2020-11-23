@@ -9,7 +9,10 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -18,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleService;
 
 import com.bumptech.glide.Glide;
@@ -27,6 +31,8 @@ import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.Request;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Util.Constants;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -95,16 +101,16 @@ public class MessengerService extends LifecycleService {
     }
 
     private void createNewRequestNotificationWithPlaceholderIcon(Request request) {
-        Resources resources = getApplicationContext().getResources();
-        Bitmap bitmap = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher_round);
-        createNewRequestNotificationWithBitmapIcon(request, bitmap);
+        Drawable drawable = ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_default_user);
+        Bitmap bitmap1 = drawableToBitmap(drawable);
+        createNewRequestNotificationWithBitmapIcon(request, bitmap1);
     }
 
     private void createNewRequestNotificationWithUserIcon(Request request, String iconUrl) {
         Glide.with(getApplicationContext())
                 .asBitmap()
                 .load(iconUrl)
-                .placeholder(R.drawable.ic_launcher_foreground)
+                .placeholder(R.drawable.ic_default_user)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
@@ -172,5 +178,29 @@ public class MessengerService extends LifecycleService {
             requestNotificationFuture.cancel(true);
         }
         super.onDestroy();
+    }
+
+
+    // https://stackoverflow.com/questions/3035692/how-to-convert-a-drawable-to-a-bitmap
+    public static Bitmap drawableToBitmap (Drawable drawable) {
+        Bitmap bitmap = null;
+
+        if (drawable instanceof BitmapDrawable) {
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+            if(bitmapDrawable.getBitmap() != null) {
+                return bitmapDrawable.getBitmap();
+            }
+        }
+
+        if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
+        } else {
+            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        }
+
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 }

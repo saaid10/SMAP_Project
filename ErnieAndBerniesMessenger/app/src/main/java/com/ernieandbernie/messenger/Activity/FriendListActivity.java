@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -67,10 +68,8 @@ public class FriendListActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     if (result.getData() == null) {
-                        //Display an error
                         return;
                     }
-
                     repository.uploadProfilePicture(result.getData().getData());
                 }
             });
@@ -157,12 +156,7 @@ public class FriendListActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.rcView);
         //  final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, new MessengerListAdapter.OnMessengerClickListener())
-        repository.getApplicationUser().observe(this, new Observer<User>() {
-            @Override
-            public void onChanged(User user) {
-                Log.d(TAG, "onChanged: " + user);
-            }
-        });
+
     }
 
     private void pickImage() {
