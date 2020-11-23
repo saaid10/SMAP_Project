@@ -3,9 +3,10 @@ package com.ernieandbernie.messenger.Models;
 import com.google.firebase.database.Exclude;
 
 import java.util.HashMap;
-import java.util.List;
 
 public class User {
+
+    /** Key = uid || value = displayName */
     public HashMap<String, String> friends;
     public Double latitude;
     public Double longitude;
