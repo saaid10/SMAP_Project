@@ -9,19 +9,16 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleService;
-import androidx.lifecycle.Observer;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -30,28 +27,25 @@ import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.Request;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Util.Constants;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static android.app.Notification.EXTRA_NOTIFICATION_ID;
+import java.util.concurrent.Future;
 
 public class MessengerService extends LifecycleService {
 
-    public static final String SERVICE_CHANNEL = "Assignment 2 Service Channel";
-    private static final String TAG = "CountryService";
-    private static final int NOTIFICATION_ID = 42;
+    private static final String SERVICE_CHANNEL = "Ernie And Bernie's Messenger";
+    private static final String TAG = "Messenger Service";
+    private static final int NEW_REQUEST_NOTIFICATION_ID = 42;
 
     private ExecutorService executorService;
-
     private Repository repository;
+    Future<?> requestNotificationFuture;
 
     public MessengerService() {
     }
@@ -76,7 +70,9 @@ public class MessengerService extends LifecycleService {
         repository.getFriendRequests().observe(this, requests -> {
             if (requests.isEmpty()) return;
 
-            createNotification(requests.get(0));
+            requestNotificationFuture = executorService.submit(() -> {
+                createNotification(requests.get(0));
+            });
         });
     }
 
@@ -85,9 +81,9 @@ public class MessengerService extends LifecycleService {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.getValue() != null) {
-                    createNotificationWithUserIcon(request, (String) snapshot.getValue());
+                    createNewRequestNotificationWithUserIcon(request, (String) snapshot.getValue());
                 } else {
-                    createNotificationWithPlaceholderIcon(request);
+                    createNewRequestNotificationWithPlaceholderIcon(request);
                 }
             }
 
@@ -98,13 +94,13 @@ public class MessengerService extends LifecycleService {
         });
     }
 
-    private void createNotificationWithPlaceholderIcon(Request request) {
+    private void createNewRequestNotificationWithPlaceholderIcon(Request request) {
         Resources resources = getApplicationContext().getResources();
         Bitmap bitmap = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher_round);
-        createNotificationWithBitmapIcon(request, bitmap);
+        createNewRequestNotificationWithBitmapIcon(request, bitmap);
     }
 
-    private void createNotificationWithUserIcon(Request request, String iconUrl) {
+    private void createNewRequestNotificationWithUserIcon(Request request, String iconUrl) {
         Glide.with(getApplicationContext())
                 .asBitmap()
                 .load(iconUrl)
@@ -112,7 +108,7 @@ public class MessengerService extends LifecycleService {
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        createNotificationWithBitmapIcon(request, resource);
+                        createNewRequestNotificationWithBitmapIcon(request, resource);
                     }
 
                     @Override
@@ -123,17 +119,17 @@ public class MessengerService extends LifecycleService {
                     @Override
                     public void onLoadFailed(@Nullable Drawable errorDrawable) {
                         super.onLoadFailed(errorDrawable);
-                        createNotificationWithPlaceholderIcon(request);
+                        createNewRequestNotificationWithPlaceholderIcon(request);
                     }
                 });
     }
 
-    private void createNotificationWithBitmapIcon(Request request, Bitmap resource) {
-        Intent okIntent = createIntent(Constants.ACTION_OK, request);
+    private void createNewRequestNotificationWithBitmapIcon(Request request, Bitmap resource) {
+        Intent okIntent = createNewRequestIntent(Constants.ACTION_OK, request);
         PendingIntent okPendingIntent =
                 PendingIntent.getBroadcast(getApplicationContext(), 1, okIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Intent noIntent = createIntent(Constants.ACTION_NO, request);
+        Intent noIntent = createNewRequestIntent(Constants.ACTION_NO, request);
         PendingIntent noPendingIntent =
                 PendingIntent.getBroadcast(getApplicationContext(), 2, noIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -149,15 +145,15 @@ public class MessengerService extends LifecycleService {
                 .build();
 
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
-        notificationManagerCompat.notify(NOTIFICATION_ID, notification);
+        notificationManagerCompat.notify(NEW_REQUEST_NOTIFICATION_ID, notification);
     }
 
-    private Intent createIntent(String action, Request request) {
+    private Intent createNewRequestIntent(String action, Request request) {
         Intent intent = new Intent(getApplicationContext(), MessengerReceiver.class);
         intent.setAction(action);
         intent.putExtra(Constants.REQUEST_FROM_UID, request.requestFromUid);
         intent.putExtra(Constants.DISPLAY_NAME, request.requestFromDisplayName);
-        intent.putExtra(Constants.NOTIFICATION_ID_EXTRA, NOTIFICATION_ID);
+        intent.putExtra(Constants.NOTIFICATION_ID_EXTRA, NEW_REQUEST_NOTIFICATION_ID);
         return intent;
     }
 
@@ -171,7 +167,10 @@ public class MessengerService extends LifecycleService {
     @Override
     public void onDestroy() {
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
-        notificationManagerCompat.cancel(NOTIFICATION_ID);
+        notificationManagerCompat.cancel(NEW_REQUEST_NOTIFICATION_ID);
+        if (requestNotificationFuture != null) {
+            requestNotificationFuture.cancel(true);
+        }
         super.onDestroy();
     }
 }

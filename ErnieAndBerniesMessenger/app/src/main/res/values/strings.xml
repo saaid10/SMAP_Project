@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Ernie And Bernies Messenger</string>
+    <string name="app_name">Ernie And Bernie\'s Messenger</string>
     <string name="welcome">Welcome! </string>
     <string name="changeProfilePicture">Change profile picture</string>
     <string name="addFriends">Add friends</string>
@@ -16,4 +16,5 @@
     <string name="new_friend_request_content">You have a new friend request from %s, would you like to accept?</string>
     <string name="accept">Accept</string>
     <string name="decline">Decline</string>
+    <string name="service_name">%s Service</string>
 </resources>

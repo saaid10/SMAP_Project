@@ -2,6 +2,7 @@ package com.ernieandbernie.messenger.Models;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -22,6 +23,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -46,6 +48,8 @@ public class Repository {
     private MutableLiveData<List<User>> usersCloseTo;
     private MutableLiveData<List<Request>> friendRequests;
 
+    private final Map<DatabaseReference, ValueEventListener> listeners = new HashMap<>();
+
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
             synchronized (Repository.class) {
@@ -64,22 +68,6 @@ public class Repository {
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         storageReference = FirebaseStorage.getInstance().getReference().child(firebaseUser.getUid());
         loadApplicationUser();
-
-        // This is test stuff
-        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).child(Constants.FRIENDS).orderByChild(Constants.DISPLAY_NAME).equalTo("123").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    User user = createUserFromSnapshot(dataSnapshot);
-                }
-                Log.d(TAG, "onDataChange: " + snapshot);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                makeToast(error.getMessage());
-            }
-        });
     }
 
     public void updateCurrentUserLocationInDB(LatLng latLng) {
@@ -96,7 +84,8 @@ public class Repository {
     }
 
     private void loadApplicationUser() {
-        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
+        DatabaseReference ref = databaseReference.child(Constants.USERS).child(firebaseUser.getUid());
+        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 applicationUser.postValue(createUserFromSnapshot(snapshot));
@@ -107,6 +96,7 @@ public class Repository {
                 makeToast(error.getMessage());
             }
         });
+        listeners.put(ref, listener);
     }
 
     private User createUserFromSnapshot(DataSnapshot snapshot) {
@@ -165,7 +155,13 @@ public class Repository {
     }
 
     private void loadUsersCloseToUser() {
-        databaseReference.child(Constants.USERS).orderByChild(Constants.LATITUDE).startAt(getApplicationUser().getValue().latitude - 1).endAt(getApplicationUser().getValue().latitude + 1).addValueEventListener(new ValueEventListener() {
+        Query query = databaseReference
+                .child(Constants.USERS)
+                .orderByChild(Constants.LATITUDE)
+                .startAt(getApplicationUser().getValue().latitude - 1)
+                .endAt(getApplicationUser().getValue().latitude + 1);
+
+        ValueEventListener listener = query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<User> users = new ArrayList<>();
@@ -180,6 +176,8 @@ public class Repository {
                 makeToast(error.getMessage());
             }
         });
+
+        listeners.put(query.getRef(), listener);
     }
 
     public LiveData<List<User>> getUsersCloseTo() {
@@ -195,7 +193,11 @@ public class Repository {
     }
 
     public void setupFriendRequests() {
-        databaseReference.child(Constants.REQUESTS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
+        DatabaseReference ref = databaseReference
+                .child(Constants.REQUESTS)
+                .child(firebaseUser.getUid());
+
+        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Request> requests = new ArrayList<>();
@@ -215,6 +217,8 @@ public class Repository {
 
             }
         });
+
+        listeners.put(ref, listener);
     }
 
     public LiveData<List<Request>> getFriendRequests() {
@@ -256,6 +260,9 @@ public class Repository {
     }
 
     public void clearRepository() {
+        for (Map.Entry<DatabaseReference, ValueEventListener> listener : listeners.entrySet()) {
+            listener.getKey().removeEventListener(listener.getValue());
+        }
         friendRequests = new MutableLiveData<>();
         usersCloseTo = new MutableLiveData<>();
         applicationUser = new MutableLiveData<>();
