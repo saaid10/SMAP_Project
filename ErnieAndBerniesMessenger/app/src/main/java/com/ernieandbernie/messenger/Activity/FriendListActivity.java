@@ -175,6 +175,9 @@ public class FriendListActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.rcView);
         //  final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, new MessengerListAdapter.OnMessengerClickListener())
 
+        // repository.messageSetupTest();
+        // repository.getChatTest();
+        // repository.newMessageTest("BU5dfBrUhZWKZQts2eHUKPj9ERj1");
     }
 
     private void pickImage() {

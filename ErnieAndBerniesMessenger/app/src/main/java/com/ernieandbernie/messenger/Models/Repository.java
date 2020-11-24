@@ -7,8 +7,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 
 import com.ernieandbernie.messenger.Models.CallbackInterfaces.GetDisplayNameByUidCallback;
 import com.ernieandbernie.messenger.Service.MessengerService;
@@ -29,7 +32,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,9 +203,10 @@ public class Repository {
                 .child(Constants.REQUESTS)
                 .child(firebaseUser.getUid());
 
-        ValueEventListener listener = ref.limitToFirst(1).addValueEventListener(new ValueEventListener() {
+        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.hasChildren()) return;
                 List<Request> requests = new ArrayList<>();
 
                 for (DataSnapshot child : snapshot.getChildren()) {
@@ -252,7 +259,29 @@ public class Repository {
 
         databaseReference.child(Constants.USERS).child(newFriendUid).child(Constants.FRIENDS).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
 
+        createChatForNewFriends(newFriendUid, newFriendDisplayName);
+
         deleteFriendRequest(newFriendUid);
+    }
+
+    private Observer<User> createChatForNewFriendsObserver;
+    private void removeCreateChatForNewFriendsObserver() {
+        getApplicationUser().removeObserver(createChatForNewFriendsObserver);
+    }
+    private void createChatForNewFriends(String newFriendUid, String newFriendDisplayName) {
+        createChatForNewFriendsObserver = new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                DatabaseReference ref = databaseReference.child("pairs");
+                String key = ref.push().getKey();
+
+                Chat chat = new Chat(key);
+                ref.child(user.uid).child(newFriendUid).setValue(chat);
+                ref.child(newFriendUid).child(user.uid).setValue(chat);
+                removeCreateChatForNewFriendsObserver();
+            }
+        };
+        getApplicationUser().observeForever(createChatForNewFriendsObserver);
     }
 
     public void deleteFriendRequest(String requestFromUid) {
@@ -267,6 +296,106 @@ public class Repository {
         usersCloseTo = new MutableLiveData<>();
         applicationUser = new MutableLiveData<>();
         INSTANCE = null;
+    }
+
+    private Observer<User> observer;
+    private Observer<User> observer1;
+
+    public void messageSetupTest() {
+        observer = new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                DatabaseReference ref = databaseReference.child("pairs");
+                String key = ref.push().getKey();
+                ref.child(user.uid).child(user.getFriendsAsList().get(0).uuid).setValue(key);
+                ref.child(user.getFriendsAsList().get(0).uuid).child(user.uid).setValue(key);
+
+                DatabaseReference ref2 = databaseReference.child("messages").child(key);
+                String key2 = ref2.push().getKey();
+
+                Message message = new Message();
+                message.content = "Hello World";
+                message.senderDisplayName = user.displayName;
+                message.senderUid = user.uid;
+                ref2.child(key2).setValue(message);
+                removeObserver();
+            }
+        };
+        getApplicationUser().observeForever(observer);
+    }
+
+    public void getChatTest() {
+        observer1 = new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                databaseReference.child("pairs").child(user.uid).child("BU5dfBrUhZWKZQts2eHUKPj9ERj1").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Log.d(TAG, "onDataChange: " + snapshot);
+
+                        databaseReference.child("messages").child(snapshot.getValue(String.class)).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                Log.d(TAG, "onDataChange: " + snapshot);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+                removeObserver1();
+            }
+        };
+        getApplicationUser().observeForever(observer1);
+    }
+
+    private void removeObserver() {
+        getApplicationUser().removeObserver(observer);
+    }
+
+    private void removeObserver1() {
+        getApplicationUser().removeObserver(observer1);
+    }
+
+    private Observer<User> newMessageTestObserver;
+    private void removeNewMessageTestObserver() {
+        getApplicationUser().removeObserver(newMessageTestObserver);
+    }
+    public void newMessageTest(String friendUid) {
+        newMessageTestObserver = new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                databaseReference.child("pairs").child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        DatabaseReference ref2 = databaseReference.child("messages").child(snapshot.getValue(Chat.class).chatId);
+                        String key2 = ref2.push().getKey();
+
+                        Message message = new Message();
+                        message.content = "Hello World";
+                        message.senderDisplayName = user.displayName;
+                        message.senderUid = user.uid;
+                        ref2.child(key2).setValue(message);
+                        removeNewMessageTestObserver();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+            }
+        };
+
+        getApplicationUser().observeForever(newMessageTestObserver);
     }
 }
 

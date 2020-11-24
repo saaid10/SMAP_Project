@@ -2,7 +2,10 @@ package com.ernieandbernie.messenger.Models;
 
 import com.google.firebase.database.Exclude;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class User {
 
@@ -29,6 +32,15 @@ public class User {
 
     public HashMap<String, String> getFriends() {
         return friends;
+    }
+
+    public List<Friend> getFriendsAsList() {
+        List<Friend> friendsList = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : friends.entrySet()) {
+            friendsList.add(new Friend(entry.getValue(), entry.getKey()));
+        }
+        return friendsList;
     }
 
     public void setFriends(HashMap<String, String> friends) {
