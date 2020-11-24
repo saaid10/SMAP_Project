@@ -94,6 +94,8 @@ public class FriendListActivity extends AppCompatActivity {
         return true;
     }
 
+
+    // https://stackoverflow.com/questions/18374183/how-to-show-icons-in-overflow-menu-in-actionbar
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         if (menu.getClass().getSimpleName().equals("MenuBuilder")) {
@@ -128,8 +130,6 @@ public class FriendListActivity extends AppCompatActivity {
             });
             return true;
         }
-        // If we got here, the user's action was not recognized.
-        // Invoke the superclass to handle it.
         return super.onOptionsItemSelected(item);
     }
 

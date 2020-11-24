@@ -55,7 +55,7 @@ public class MessengerService extends LifecycleService {
         super.onStartCommand(intent, flags, startId);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(SERVICE_CHANNEL, TAG, NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel channel = new NotificationChannel(SERVICE_CHANNEL, TAG, NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(channel);
         }
