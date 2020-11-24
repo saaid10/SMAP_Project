@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,13 +13,14 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleService;
+import androidx.lifecycle.Observer;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -37,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class MessengerService extends LifecycleService {
+public class MessengerService extends Service {
 
     private static final String SERVICE_CHANNEL = "Ernie And Bernie's Messenger";
     private static final String TAG = "Messenger Service";
@@ -46,6 +48,7 @@ public class MessengerService extends LifecycleService {
     private ExecutorService executorService;
     private Repository repository;
     Future<?> requestNotificationFuture;
+    private Observer<Request> requestObserver;
 
     public MessengerService() {
     }
@@ -67,13 +70,15 @@ public class MessengerService extends LifecycleService {
     }
 
     private void loadWork() {
-        repository.getFriendRequests().observe(this, request -> {
-            if (request == null) return;
+        requestObserver = new Observer<Request>() {
+            @Override
+            public void onChanged(Request request) {
+                if (request == null) return;
 
-            requestNotificationFuture = executorService.submit(() -> {
-                createNotification(request);
-            });
-        });
+                requestNotificationFuture = executorService.submit(() -> createNotification(request));
+            }
+        };
+        repository.getFriendRequests().observeForever(requestObserver);
     }
 
     private void createNotification(Request request) {
@@ -141,6 +146,7 @@ public class MessengerService extends LifecycleService {
                 .setLargeIcon(resource)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(true)
                 .build();
 
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
@@ -159,7 +165,6 @@ public class MessengerService extends LifecycleService {
     @Override
     public IBinder onBind(@NotNull Intent intent) {
         // TODO: Return the communication channel to the service.
-        super.onBind(intent);
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -170,6 +175,7 @@ public class MessengerService extends LifecycleService {
         if (requestNotificationFuture != null) {
             requestNotificationFuture.cancel(true);
         }
+        repository.getFriendRequests().removeObserver(requestObserver);
         super.onDestroy();
     }
 

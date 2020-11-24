@@ -1,8 +1,13 @@
 package com.ernieandbernie.messenger.Models;
 
+import com.google.firebase.database.Exclude;
+
 public class Friend {
     public String displayName;
     public String uuid;
+
+    @Exclude
+    public String profileUrl;
 
 
     public Friend() { }

@@ -47,6 +47,7 @@ android {
             versionName "${mVersionName} Build: ${versionProps['VERSION_BUILD']}"
 
             testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+            vectorDrawables.useSupportLibrary = true
         }
 
     } else {

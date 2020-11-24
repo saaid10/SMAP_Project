@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -18,12 +19,16 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
+import com.ernieandbernie.messenger.View.FriendListViewModel;
+import com.ernieandbernie.messenger.View.MessengerListAdapter;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -32,6 +37,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthSettings;
 
 import java.lang.reflect.Method;
 
@@ -44,6 +50,8 @@ public class FriendListActivity extends AppCompatActivity {
 
     // View bindings
     private Button btnProfilePic, btnAddFriends;
+
+    private FriendListViewModel friendListViewModel;
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog. Save the return value, an instance of
@@ -172,8 +180,20 @@ public class FriendListActivity extends AppCompatActivity {
 
 
         RecyclerView recyclerView = findViewById(R.id.rcView);
-        //  final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, new MessengerListAdapter.OnMessengerClickListener())
+        final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, item -> {
+            // listViewModel.loadOne(item.getId());
+            // Intent i = new Intent(getApplicationContext(), DetailsActivity.class);
+            // startActivity(i);
 
+            Toast.makeText(getApplicationContext(), item.getDisplayName(), Toast.LENGTH_SHORT).show();
+        });
+
+        recyclerView.setAdapter(messengerListAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        friendListViewModel = new ViewModelProvider(this).get(FriendListViewModel.class);
+
+        friendListViewModel.getUser().observe(this, (user) -> messengerListAdapter.setFriends(user.friends));
         // repository.messageSetupTest();
         // repository.getChatTest();
         // repository.newMessageTest("BU5dfBrUhZWKZQts2eHUKPj9ERj1");
