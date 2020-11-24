@@ -46,7 +46,7 @@ public class Repository {
 
     private MutableLiveData<User> applicationUser = new MutableLiveData<>();
     private MutableLiveData<List<User>> usersCloseTo;
-    private MutableLiveData<List<Request>> friendRequests;
+    private MutableLiveData<Request> friendRequests;
 
     private final Map<DatabaseReference, ValueEventListener> listeners = new HashMap<>();
 
@@ -197,7 +197,7 @@ public class Repository {
                 .child(Constants.REQUESTS)
                 .child(firebaseUser.getUid());
 
-        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
+        ValueEventListener listener = ref.limitToFirst(1).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Request> requests = new ArrayList<>();
@@ -209,7 +209,7 @@ public class Repository {
                     requests.add(request);
                 }
 
-                friendRequests.postValue(requests);
+                friendRequests.postValue(requests.get(0));
             }
 
             @Override
@@ -221,7 +221,7 @@ public class Repository {
         listeners.put(ref, listener);
     }
 
-    public LiveData<List<Request>> getFriendRequests() {
+    public LiveData<Request> getFriendRequests() {
         if (friendRequests == null) {
             friendRequests = new MutableLiveData<>();
             setupFriendRequests();

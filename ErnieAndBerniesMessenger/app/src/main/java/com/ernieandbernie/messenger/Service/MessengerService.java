@@ -6,16 +6,12 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.VectorDrawable;
 import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,8 +27,6 @@ import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.Request;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Util.Constants;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -73,11 +67,11 @@ public class MessengerService extends LifecycleService {
     }
 
     private void loadWork() {
-        repository.getFriendRequests().observe(this, requests -> {
-            if (requests.isEmpty()) return;
+        repository.getFriendRequests().observe(this, request -> {
+            if (request == null) return;
 
             requestNotificationFuture = executorService.submit(() -> {
-                createNotification(requests.get(0));
+                createNotification(request);
             });
         });
     }
@@ -95,7 +89,7 @@ public class MessengerService extends LifecycleService {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                createNewRequestNotificationWithPlaceholderIcon(request);
             }
         });
     }
@@ -110,7 +104,6 @@ public class MessengerService extends LifecycleService {
         Glide.with(getApplicationContext())
                 .asBitmap()
                 .load(iconUrl)
-                .placeholder(R.drawable.ic_default_user)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
@@ -182,17 +175,17 @@ public class MessengerService extends LifecycleService {
 
 
     // https://stackoverflow.com/questions/3035692/how-to-convert-a-drawable-to-a-bitmap
-    public static Bitmap drawableToBitmap (Drawable drawable) {
+    public static Bitmap drawableToBitmap(Drawable drawable) {
         Bitmap bitmap = null;
 
         if (drawable instanceof BitmapDrawable) {
             BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-            if(bitmapDrawable.getBitmap() != null) {
+            if (bitmapDrawable.getBitmap() != null) {
                 return bitmapDrawable.getBitmap();
             }
         }
 
-        if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+        if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
             bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
         } else {
             bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);

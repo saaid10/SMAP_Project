@@ -82,7 +82,9 @@ public class FriendListActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         setup();
         updateCurrentUserLocationInDB();
-        startService(new Intent(this, MessengerService.class));
+
+        if(savedInstanceState == null)
+            startService(new Intent(this, MessengerService.class));
     }
 
     @Override
