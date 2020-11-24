@@ -111,7 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onChanged(User applicationUser) {
                         clearMarkers();
-                        Set<String> friendIds = applicationUser.friends.keySet();
+                        Set<String> friendIds = applicationUser.getFriendUids();
                         for (User user : users) {
                             if (friendIds.contains(user.uid)) {
                                 continue;

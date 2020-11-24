@@ -3,14 +3,13 @@ package com.ernieandbernie.messenger.Models;
 import com.google.firebase.database.Exclude;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class User {
 
-    /** Key = uid || value = displayName */
-    public HashMap<String, String> friends;
+    public List<Friend> friends = new ArrayList<>();
     public Double latitude;
     public Double longitude;
     public String displayName;
@@ -22,7 +21,7 @@ public class User {
     public User() {
     }
 
-    public User(String displayName, HashMap<String, String> friends, Double latitude, Double longitude, String storageUri) {
+    public User(String displayName, List<Friend> friends, Double latitude, Double longitude, String storageUri) {
         this.friends = friends;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -30,20 +29,20 @@ public class User {
         this.storageUri = storageUri;
     }
 
-    public HashMap<String, String> getFriends() {
+    public List<Friend> getFriends() {
         return friends;
     }
 
-    public List<Friend> getFriendsAsList() {
-        List<Friend> friendsList = new ArrayList<>();
-
-        for (Map.Entry<String, String> entry : friends.entrySet()) {
-            friendsList.add(new Friend(entry.getValue(), entry.getKey()));
+    @Exclude
+    public Set<String> getFriendUids() {
+        Set<String> ids = new HashSet<>();
+        for (Friend friend : friends) {
+            ids.add(friend.uuid);
         }
-        return friendsList;
+        return ids;
     }
 
-    public void setFriends(HashMap<String, String> friends) {
+    public void setFriends(List<Friend> friends) {
         this.friends = friends;
     }
 

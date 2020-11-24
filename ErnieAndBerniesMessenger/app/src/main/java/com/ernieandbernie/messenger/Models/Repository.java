@@ -106,9 +106,16 @@ public class Repository {
     }
 
     private User createUserFromSnapshot(DataSnapshot snapshot) {
-        User user = snapshot.getValue(User.class);
+        User user = new User();
+        user.displayName = snapshot.child(Constants.DISPLAY_NAME).getValue(String.class);
+        user.latitude = snapshot.child(Constants.LATITUDE).getValue(Double.class);
+        user.longitude = snapshot.child(Constants.LONGITUDE).getValue(Double.class);
+        user.storageUri = snapshot.child(Constants.STORAGE_URI).getValue(String.class);
         user.uid = snapshot.getKey();
-        user.friends = user.friends != null ? user.friends : new HashMap<>();
+        // user.friends = user.friends != null ? user.friends : new HashMap<>();
+        for (DataSnapshot child : snapshot.child("friends").getChildren()) {
+            user.friends.add(child.getValue(Friend.class));
+        }
         return user;
     }
 
@@ -255,9 +262,9 @@ public class Repository {
     }
 
     public void addNewFriend(String newFriendUid, String newFriendDisplayName) {
-        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).child(Constants.FRIENDS).child(newFriendUid).setValue(newFriendDisplayName);
+        databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).child(Constants.FRIENDS).push().setValue(new Friend(newFriendDisplayName, newFriendUid));
 
-        databaseReference.child(Constants.USERS).child(newFriendUid).child(Constants.FRIENDS).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
+        databaseReference.child(Constants.USERS).child(newFriendUid).child(Constants.FRIENDS).push().setValue(new Friend(firebaseUser.getDisplayName(), firebaseUser.getUid()));
 
         createChatForNewFriends(newFriendUid, newFriendDisplayName);
 
@@ -272,7 +279,7 @@ public class Repository {
         createChatForNewFriendsObserver = new Observer<User>() {
             @Override
             public void onChanged(User user) {
-                DatabaseReference ref = databaseReference.child("pairs");
+                DatabaseReference ref = databaseReference.child(Constants.CHADS);
                 String key = ref.push().getKey();
 
                 Chat chat = new Chat(key);
@@ -301,11 +308,12 @@ public class Repository {
     private Observer<User> observer;
     private Observer<User> observer1;
 
+    /*
     public void messageSetupTest() {
         observer = new Observer<User>() {
             @Override
             public void onChanged(User user) {
-                DatabaseReference ref = databaseReference.child("pairs");
+                DatabaseReference ref = databaseReference.child("chads");
                 String key = ref.push().getKey();
                 ref.child(user.uid).child(user.getFriendsAsList().get(0).uuid).setValue(key);
                 ref.child(user.getFriendsAsList().get(0).uuid).child(user.uid).setValue(key);
@@ -323,12 +331,12 @@ public class Repository {
         };
         getApplicationUser().observeForever(observer);
     }
-
+*/
     public void getChatTest() {
         observer1 = new Observer<User>() {
             @Override
             public void onChanged(User user) {
-                databaseReference.child("pairs").child(user.uid).child("BU5dfBrUhZWKZQts2eHUKPj9ERj1").addValueEventListener(new ValueEventListener() {
+                databaseReference.child(Constants.CHADS).child(user.uid).child("BU5dfBrUhZWKZQts2eHUKPj9ERj1").addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         Log.d(TAG, "onDataChange: " + snapshot);
@@ -373,7 +381,7 @@ public class Repository {
         newMessageTestObserver = new Observer<User>() {
             @Override
             public void onChanged(User user) {
-                databaseReference.child("pairs").child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseReference.child(Constants.CHADS).child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         DatabaseReference ref2 = databaseReference.child("messages").child(snapshot.getValue(Chat.class).chatId);
@@ -383,6 +391,7 @@ public class Repository {
                         message.content = "Hello World";
                         message.senderDisplayName = user.displayName;
                         message.senderUid = user.uid;
+                        message.setTimestamp();
                         ref2.child(key2).setValue(message);
                         removeNewMessageTestObserver();
                     }

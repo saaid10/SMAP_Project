@@ -166,7 +166,6 @@ public class FriendListActivity extends AppCompatActivity {
         btnAddFriends.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO:
                 startActivity(new Intent(FriendListActivity.this, MapsActivity.class));
             }
         });

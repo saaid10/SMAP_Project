@@ -8,4 +8,11 @@ public class Message {
     public String timestamp;
 
     public Message() {}
+
+
+    // https://stackoverflow.com/questions/8077530/android-get-current-timestamp
+    public void setTimestamp() {
+        long tsLong = System.currentTimeMillis()/1000;
+        this.timestamp = Long.toString(tsLong);
+    }
 }
