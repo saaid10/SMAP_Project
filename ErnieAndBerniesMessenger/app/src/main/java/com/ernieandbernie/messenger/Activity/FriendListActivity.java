@@ -37,7 +37,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthSettings;
 
 import java.lang.reflect.Method;
 
@@ -91,7 +90,7 @@ public class FriendListActivity extends AppCompatActivity {
         setup();
         updateCurrentUserLocationInDB();
 
-        if(savedInstanceState == null)
+        if (savedInstanceState == null)
             startService(new Intent(this, MessengerService.class));
     }
 
@@ -196,7 +195,13 @@ public class FriendListActivity extends AppCompatActivity {
         friendListViewModel.getUser().observe(this, (user) -> messengerListAdapter.setFriends(user.friends));
         // repository.messageSetupTest();
         // repository.getChatTest();
-        // repository.newMessageTest("BU5dfBrUhZWKZQts2eHUKPj9ERj1");
+        // repository.newMessageTest("3DsCbONOiKeAkA1NyCHakNkNxIo1");
+        repository.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", (messages) -> {
+            Toast.makeText(getApplicationContext(), messages.toString(), Toast.LENGTH_LONG).show();
+        });
+        repository.getMessagesFromChadId("-MMuSp6xRUfh8mDRBW8b", (messages) -> {
+            Toast.makeText(getApplicationContext(), messages.toString(), Toast.LENGTH_LONG).show();
+        });
     }
 
     private void pickImage() {

@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
 import com.ernieandbernie.messenger.Models.CallbackInterfaces.GetDisplayNameByUidCallback;
+import com.ernieandbernie.messenger.Models.CallbackInterfaces.GetMessagesCallback;
 import com.ernieandbernie.messenger.Util.Constants;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Continuation;
@@ -46,6 +47,7 @@ public class Repository {
     private MutableLiveData<User> applicationUser = new MutableLiveData<>();
     private MutableLiveData<List<User>> usersCloseTo;
     private MutableLiveData<Request> friendRequests;
+    private MutableLiveData<List<Message>> messages = new MutableLiveData<>();
 
     private final Map<DatabaseReference, ValueEventListener> listeners = new HashMap<>();
 
@@ -259,16 +261,18 @@ public class Repository {
 
         databaseReference.child(Constants.USERS).child(newFriendUid).child(Constants.FRIENDS).push().setValue(new Friend(firebaseUser.getDisplayName(), firebaseUser.getUid()));
 
-        createChatForNewFriends(newFriendUid, newFriendDisplayName);
+        createChatForNewFriends(newFriendUid);
 
         deleteFriendRequest(newFriendUid);
     }
 
     private Observer<User> createChatForNewFriendsObserver;
+
     private void removeCreateChatForNewFriendsObserver() {
         getApplicationUser().removeObserver(createChatForNewFriendsObserver);
     }
-    private void createChatForNewFriends(String newFriendUid, String newFriendDisplayName) {
+
+    private void createChatForNewFriends(String newFriendUid) {
         createChatForNewFriendsObserver = new Observer<User>() {
             @Override
             public void onChanged(User user) {
@@ -298,33 +302,53 @@ public class Repository {
         INSTANCE = null;
     }
 
-    private Observer<User> observer;
     private Observer<User> observer1;
 
-    /*
-    public void messageSetupTest() {
-        observer = new Observer<User>() {
+    public void getMessagesFromChadId(String chadId, GetMessagesCallback callback) {
+        DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
+        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onChanged(User user) {
-                DatabaseReference ref = databaseReference.child("chads");
-                String key = ref.push().getKey();
-                ref.child(user.uid).child(user.getFriendsAsList().get(0).uuid).setValue(key);
-                ref.child(user.getFriendsAsList().get(0).uuid).child(user.uid).setValue(key);
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Message> messageList = new ArrayList<>();
 
-                DatabaseReference ref2 = databaseReference.child("messages").child(key);
-                String key2 = ref2.push().getKey();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    messageList.add(child.getValue(Message.class));
+                }
 
-                Message message = new Message();
-                message.content = "Hello World";
-                message.senderDisplayName = user.displayName;
-                message.senderUid = user.uid;
-                ref2.child(key2).setValue(message);
-                removeObserver();
+                callback.callback(messageList);
             }
-        };
-        getApplicationUser().observeForever(observer);
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        listeners.put(ref, listener);
     }
-*/
+
+    private void setupMessages(String chadId) {
+        DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
+        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Message> messageList = new ArrayList<>();
+
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    messageList.add(child.getValue(Message.class));
+                }
+
+                messages.postValue(messageList);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        listeners.put(ref, listener);
+    }
+
     public void getChatTest() {
         observer1 = new Observer<User>() {
             @Override
@@ -334,7 +358,7 @@ public class Repository {
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         Log.d(TAG, "onDataChange: " + snapshot);
 
-                        databaseReference.child("messages").child(snapshot.getValue(String.class)).addValueEventListener(new ValueEventListener() {
+                        databaseReference.child(Constants.MESSAGES).child(snapshot.getValue(String.class)).addValueEventListener(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
                                 Log.d(TAG, "onDataChange: " + snapshot);
@@ -358,18 +382,16 @@ public class Repository {
         getApplicationUser().observeForever(observer1);
     }
 
-    private void removeObserver() {
-        getApplicationUser().removeObserver(observer);
-    }
-
     private void removeObserver1() {
         getApplicationUser().removeObserver(observer1);
     }
 
     private Observer<User> newMessageTestObserver;
+
     private void removeNewMessageTestObserver() {
         getApplicationUser().removeObserver(newMessageTestObserver);
     }
+
     public void newMessageTest(String friendUid) {
         newMessageTestObserver = new Observer<User>() {
             @Override
@@ -377,7 +399,7 @@ public class Repository {
                 databaseReference.child(Constants.CHADS).child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        DatabaseReference ref2 = databaseReference.child("messages").child(snapshot.getValue(Chat.class).chatId);
+                        DatabaseReference ref2 = databaseReference.child(Constants.MESSAGES).child(snapshot.getValue(Chat.class).chatId);
                         String key2 = ref2.push().getKey();
 
                         Message message = new Message();

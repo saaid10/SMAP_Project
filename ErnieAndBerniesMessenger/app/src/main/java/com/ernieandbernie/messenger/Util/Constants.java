@@ -16,4 +16,5 @@ public class Constants {
     public static final String NOTIFICATION_ID_EXTRA = "notification_id_extra";
     public static final String REQUESTS = "requests";
     public static final String CHADS = "chads";
+    public static final String MESSAGES = "messages";
 }
