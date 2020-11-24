@@ -10,8 +10,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
-import com.ernieandbernie.messenger.Models.CallbackInterfaces.GetDisplayNameByUidCallback;
-import com.ernieandbernie.messenger.Models.CallbackInterfaces.GetMessagesCallback;
+import com.ernieandbernie.messenger.Models.CallbackInterfaces.DataChangedListener;
 import com.ernieandbernie.messenger.Util.Constants;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Continuation;
@@ -38,14 +37,13 @@ public class Repository {
     private static final String TAG = "Repository";
 
     private static volatile Repository INSTANCE;
-    private final FirebaseDatabase database;
     private final DatabaseReference databaseReference;
     private final StorageReference storageReference;
     private final FirebaseUser firebaseUser;
     private final Context context;
 
     private MutableLiveData<User> applicationUser = new MutableLiveData<>();
-    private MutableLiveData<List<User>> usersCloseTo;
+    private MutableLiveData<List<User>> usersCloseTo = new MutableLiveData<>();
     private MutableLiveData<Request> friendRequests;
     private MutableLiveData<List<Message>> messages = new MutableLiveData<>();
 
@@ -64,12 +62,47 @@ public class Repository {
 
     private Repository(Context application) {
         context = application.getApplicationContext();
-        database = FirebaseDatabase.getInstance();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference();
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         storageReference = FirebaseStorage.getInstance().getReference();
         loadApplicationUser();
+        loadUsersCloseToUser();
+        setupFriendRequests();
     }
+
+    public LiveData<Request> getFriendRequests() {
+        if (friendRequests == null) {
+            friendRequests = new MutableLiveData<>();
+            setupFriendRequests();
+        }
+        return friendRequests;
+    }
+
+    public LiveData<User> getApplicationUser() {
+        if (applicationUser == null) {
+            applicationUser = new MutableLiveData<>();
+            loadApplicationUser();
+        }
+        return applicationUser;
+    }
+
+    public LiveData<List<User>> getUsersCloseTo() {
+        if (usersCloseTo == null) {
+            usersCloseTo = new MutableLiveData<>();
+            loadUsersCloseToUser();
+        }
+        return usersCloseTo;
+    }
+
+    public LiveData<List<Message>> getMessages(String chadId) {
+        if (messages == null) {
+            messages = new MutableLiveData<>();
+            setupMessages(chadId);
+        }
+        return messages;
+    }
+
 
     public void updateCurrentUserLocationInDB(LatLng latLng) {
         Map<String, Object> childUpdates = new HashMap<>();
@@ -114,12 +147,21 @@ public class Repository {
         return user;
     }
 
-    public LiveData<User> getApplicationUser() {
-        if (applicationUser == null) {
-            applicationUser = new MutableLiveData<>();
-            loadApplicationUser();
-        }
-        return applicationUser;
+    public void getApplicationUserOnce(DataChangedListener<User> callback) {
+        databaseReference
+                .child(Constants.USERS)
+                .child(firebaseUser.getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        callback.onDataChanged(createUserFromSnapshot(snapshot));
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        makeToast(error.getMessage());
+                    }
+                });
     }
 
     public FirebaseUser getFirebaseUser() {
@@ -163,44 +205,43 @@ public class Repository {
     }
 
     private void loadUsersCloseToUser() {
-        Query query = databaseReference
-                .child(Constants.USERS)
-                .orderByChild(Constants.LATITUDE)
-                .startAt(getApplicationUser().getValue().latitude - 1)
-                .endAt(getApplicationUser().getValue().latitude + 1);
-
-        ValueEventListener listener = query.addValueEventListener(new ValueEventListener() {
+        getApplicationUserOnce(new DataChangedListener<User>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<User> users = new ArrayList<>();
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    users.add(createUserFromSnapshot(dataSnapshot));
-                }
-                usersCloseTo.postValue(users);
-            }
+            public void onDataChanged(User data) {
+                Query query = databaseReference
+                        .child(Constants.USERS)
+                        .orderByChild(Constants.LATITUDE)
+                        .startAt(data.latitude - 1)
+                        .endAt(data.latitude + 1);
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                makeToast(error.getMessage());
+                ValueEventListener listener = query.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<User> users = new ArrayList<>();
+                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                            users.add(createUserFromSnapshot(dataSnapshot));
+                        }
+                        usersCloseTo.postValue(users);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        makeToast(error.getMessage());
+                    }
+                });
+
+                listeners.put(query.getRef(), listener);
             }
         });
 
-        listeners.put(query.getRef(), listener);
     }
 
-    public LiveData<List<User>> getUsersCloseTo() {
-        if (usersCloseTo == null) {
-            usersCloseTo = new MutableLiveData<>();
-            loadUsersCloseToUser();
-        }
-        return usersCloseTo;
-    }
 
     public void sendFriendRequest(String requestUid) {
         databaseReference.child(Constants.REQUESTS).child(requestUid).child(firebaseUser.getUid()).setValue(firebaseUser.getDisplayName());
     }
 
-    public void setupFriendRequests() {
+    private void setupFriendRequests() {
         DatabaseReference ref = databaseReference
                 .child(Constants.REQUESTS)
                 .child(firebaseUser.getUid());
@@ -230,23 +271,15 @@ public class Repository {
         listeners.put(ref, listener);
     }
 
-    public LiveData<Request> getFriendRequests() {
-        if (friendRequests == null) {
-            friendRequests = new MutableLiveData<>();
-            setupFriendRequests();
-        }
-        return friendRequests;
-    }
-
     public DatabaseReference getProfileUrlByUid(String requestFromUid) {
         return databaseReference.child(Constants.USERS).child(requestFromUid).child(Constants.STORAGE_URI);
     }
 
-    public void getDisplayNameByUid(String uid, GetDisplayNameByUidCallback callback) {
+    public void getDisplayNameByUid(String uid, DataChangedListener<String> callback) {
         databaseReference.child(Constants.USERS).child(uid).child(Constants.DISPLAY_NAME).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                callback.callback(snapshot.getValue(String.class));
+                callback.onDataChanged(snapshot.getValue(String.class));
             }
 
             @Override
@@ -266,26 +299,14 @@ public class Repository {
         deleteFriendRequest(newFriendUid);
     }
 
-    private Observer<User> createChatForNewFriendsObserver;
-
-    private void removeCreateChatForNewFriendsObserver() {
-        getApplicationUser().removeObserver(createChatForNewFriendsObserver);
-    }
-
     private void createChatForNewFriends(String newFriendUid) {
-        createChatForNewFriendsObserver = new Observer<User>() {
-            @Override
-            public void onChanged(User user) {
-                DatabaseReference ref = databaseReference.child(Constants.CHADS);
-                String key = ref.push().getKey();
+        DatabaseReference ref = databaseReference.child(Constants.CHADS);
+        String key = ref.push().getKey();
 
-                Chat chat = new Chat(key);
-                ref.child(user.uid).child(newFriendUid).setValue(chat);
-                ref.child(newFriendUid).child(user.uid).setValue(chat);
-                removeCreateChatForNewFriendsObserver();
-            }
-        };
-        getApplicationUser().observeForever(createChatForNewFriendsObserver);
+        Chat chat = new Chat(key);
+        ref.child(getFirebaseUser().getUid()).child(newFriendUid).setValue(chat);
+        ref.child(newFriendUid).child(getFirebaseUser().getUid()).setValue(chat);
+
     }
 
     public void deleteFriendRequest(String requestFromUid) {
@@ -299,12 +320,15 @@ public class Repository {
         friendRequests = new MutableLiveData<>();
         usersCloseTo = new MutableLiveData<>();
         applicationUser = new MutableLiveData<>();
+        messages = new MutableLiveData<>();
         INSTANCE = null;
     }
 
     private Observer<User> observer1;
 
-    public void getMessagesFromChadId(String chadId, GetMessagesCallback callback) {
+
+    /** Not sure this works as intended. Maybe use function below: setupMessages */
+    public void getMessagesFromChadId(String chadId, DataChangedListener<List<Message>> callback) {
         DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
         ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
             @Override
@@ -315,7 +339,7 @@ public class Repository {
                     messageList.add(child.getValue(Message.class));
                 }
 
-                callback.callback(messageList);
+                callback.onDataChanged(messageList);
             }
 
             @Override

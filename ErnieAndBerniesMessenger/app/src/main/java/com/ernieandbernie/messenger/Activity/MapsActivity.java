@@ -1,22 +1,20 @@
 package com.ernieandbernie.messenger.Activity;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.Observer;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Observer;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -36,7 +34,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -49,6 +46,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         repository = Repository.getInstance(getApplicationContext());
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -67,7 +65,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        // Add a marker in Sydney and move the camera
         moveCamera();
         addPotentialFriendsToMap();
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -103,28 +100,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         repository.getUsersCloseTo().observe(this, new Observer<List<User>>() {
             @Override
             public void onChanged(List<User> users) {
+                clearMarkers();
+
                 if (users.isEmpty()) {
-                    clearMarkers();
                     return;
                 }
-                repository.getApplicationUser().observe(MapsActivity.this, new Observer<User>() {
-                    @Override
-                    public void onChanged(User applicationUser) {
-                        clearMarkers();
-                        Set<String> friendIds = applicationUser.getFriendUids();
-                        for (User user : users) {
-                            if (friendIds.contains(user.uid)) {
-                                continue;
-                            }
-                            LatLng userLocation = new LatLng(user.latitude, user.longitude);
-                            if (user.uid.equals(applicationUser.uid)) {
-                                addMarker(user, getString(R.string.you_are_here), userLocation);
-                            } else {
-                                addMarker(user, user.displayName, userLocation);
-                            }
-                        }
+
+                // Set<String> friendIds = applicationUser.getFriendUids();
+                for (User user : users) {
+                    if (user.getFriendUids().contains(repository.getFirebaseUser().getUid())) {
+                        continue;
                     }
-                });
+                    LatLng userLocation = new LatLng(user.latitude, user.longitude);
+                    if (user.uid.equals(repository.getFirebaseUser().getUid())) {
+                        addMarker(user, getString(R.string.you_are_here), userLocation);
+                    } else {
+                        addMarker(user, user.displayName, userLocation);
+                    }
+                }
             }
         });
     }
@@ -144,8 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void moveCamera() {
-        repository.getApplicationUser().observe(this, (applicationUser) -> {
-            removeObserver();
+        repository.getApplicationUserOnce((applicationUser) -> {
             LatLng userLocation = new LatLng(applicationUser.latitude, applicationUser.longitude);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13));
         });
@@ -163,7 +155,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void onLoadCleared(@Nullable Drawable placeholder) {
-                if (marker.getTag() == null) return;
             }
 
             @Override
@@ -179,10 +170,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 markers.put((String) marker.getTag(), marker);
             }
         });
-    }
-
-    private void removeObserver() {
-        repository.getApplicationUser().removeObservers(this);
     }
 
 

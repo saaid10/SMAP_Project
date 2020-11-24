@@ -23,6 +23,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.ernieandbernie.messenger.Models.CallbackInterfaces.DataChangedListener;
+import com.ernieandbernie.messenger.Models.Message;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
@@ -39,6 +41,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class FriendListActivity extends AppCompatActivity {
 
@@ -196,11 +199,17 @@ public class FriendListActivity extends AppCompatActivity {
         // repository.messageSetupTest();
         // repository.getChatTest();
         // repository.newMessageTest("3DsCbONOiKeAkA1NyCHakNkNxIo1");
-        repository.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", (messages) -> {
-            Toast.makeText(getApplicationContext(), messages.toString(), Toast.LENGTH_LONG).show();
+        repository.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", new DataChangedListener<List<Message>>() {
+            @Override
+            public void onDataChanged(List<Message> data) {
+                Toast.makeText(getApplicationContext(), data.toString(), Toast.LENGTH_LONG).show();
+            }
         });
-        repository.getMessagesFromChadId("-MMuSp6xRUfh8mDRBW8b", (messages) -> {
-            Toast.makeText(getApplicationContext(), messages.toString(), Toast.LENGTH_LONG).show();
+        repository.getMessagesFromChadId("-MMuSp6xRUfh8mDRBW8b", new DataChangedListener<List<Message>>() {
+            @Override
+            public void onDataChanged(List<Message> data) {
+                Toast.makeText(getApplicationContext(), data.toString(), Toast.LENGTH_LONG).show();
+            }
         });
     }
 
