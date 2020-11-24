@@ -141,10 +141,10 @@ public class MessengerService extends LifecycleService {
 
         Notification notification = new NotificationCompat.Builder(getApplicationContext(), SERVICE_CHANNEL)
                 .setContentTitle(getString(R.string.new_friend_request))
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_launcher_icon_eb_foreground)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(getString(R.string.new_friend_request_content, request.requestFromDisplayName)))
-                .addAction(R.drawable.ic_launcher_foreground, getString(R.string.accept), okPendingIntent)
-                .addAction(R.drawable.ic_launcher_foreground, getString(R.string.decline), noPendingIntent)
+                .addAction(R.drawable.ic_action_ok, getString(R.string.accept), okPendingIntent)
+                .addAction(R.drawable.ic_action_no, getString(R.string.decline), noPendingIntent)
                 .setLargeIcon(resource)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

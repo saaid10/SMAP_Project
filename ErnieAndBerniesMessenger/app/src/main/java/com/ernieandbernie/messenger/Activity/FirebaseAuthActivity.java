@@ -85,7 +85,7 @@ public class FirebaseAuthActivity extends AppCompatActivity {
                 .createSignInIntentBuilder()
                 .setAvailableProviders(providers)
                 .setIsSmartLockEnabled(false)
-                .setLogo(R.drawable.ic_launcher_foreground)      // Set logo drawable
+                .setLogo(R.mipmap.ic_launcher_icon_eb_round)      // Set logo drawable
                 .setTheme(R.style.Theme_ErnieAndBerniesMessenger)
                 .setAlwaysShowSignInMethodScreen(true)
                 .build());
