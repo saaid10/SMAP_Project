@@ -15,6 +15,11 @@
         <item name="colorControlNormal">#fff</item>
     </style>
 
+    <style name="Theme.ErnieAndBerniesMessenger.NoActionBar" parent="Theme.ErnieAndBerniesMessenger">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <style name="GreenTheme" parent="FirebaseUI">
         <!-- Required for sign-in flow styling -->
         <item name="colorPrimary">@color/material_green_500</item>

@@ -49,7 +49,10 @@
         <activity
             android:name=".Activity.MapsActivity"
             android:label="@string/title_activity_maps" />
-        <activity android:name=".Activity.FriendListActivity" />
+        <activity
+            android:name=".Activity.FriendListActivity"
+            android:theme="@style/Theme.ErnieAndBerniesMessenger.NoActionBar" />
+
         <activity android:name=".Activity.FirebaseAuthActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
