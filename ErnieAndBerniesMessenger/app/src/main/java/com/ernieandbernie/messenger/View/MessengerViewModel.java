@@ -27,27 +27,11 @@ public class MessengerViewModel extends AndroidViewModel {
         user = repository.getApplicationUser();
     }
 
-    public LiveData<User> getUser() {
-        return user;
+    public LiveData<List<Message>> getMessages() {
+        return repository.getMessages();
     }
 
-    public void uploadProfilePicture(Uri uri) {
-        repository.uploadProfilePicture(uri);
-    }
-
-    public void clearRepository() {
-        repository.clearRepository();
-    }
-
-    public void updateCurrentUserLocationInDB(LatLng latLng) {
-        repository.updateCurrentUserLocationInDB(latLng);
-    }
-
-    public void getMessagesFromChadId(String chadId, DataChangedListener<List<Message>> callback) {
-        repository.getMessagesFromChadId(chadId, callback);
-    }
-
-    public void deleteFriend(String friendUid) {
-        repository.deleteFriend(friendUid);
+    public void sendNewMessage(String message) {
+        repository.sendNewMessage(message);
     }
 }

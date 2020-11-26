@@ -23,4 +23,5 @@
     <string name="dont_allow">Don\'t allow</string>
     <string name="delete_friend">Delete Friend</string>
     <string name="delete_friend_msg">\"Would you like to delete %s from your friends?\"</string>
+    <string name="enter_message">Enter message</string>
 </resources>

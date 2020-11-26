@@ -27,12 +27,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.ernieandbernie.messenger.Models.CallbackInterfaces.DataChangedListener;
 import com.ernieandbernie.messenger.Models.Message;
-import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
 import com.ernieandbernie.messenger.View.FriendListViewModel;
-import com.ernieandbernie.messenger.View.MessengerListAdapter;
+import com.ernieandbernie.messenger.View.FriendListAdapter;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -199,12 +198,12 @@ public class FriendListActivity extends AppCompatActivity {
 
 
         RecyclerView recyclerView = findViewById(R.id.rcView);
-        final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this)
+        final FriendListAdapter friendListAdapter = new FriendListAdapter(this)
                 .setOnClickListener(item -> {
                     // listViewModel.loadOne(item.getId());
-                    // Intent i = new Intent(getApplicationContext(), DetailsActivity.class);
-                    // startActivity(i);
-                    Toast.makeText(getApplicationContext(), item.getDisplayName(), Toast.LENGTH_SHORT).show();
+                    friendListViewModel.setActiveChat(item.getUuid());
+                    Intent i = new Intent(FriendListActivity.this, MessengerActivity.class);
+                    startActivity(i);
                 })
                 .setOnLongClickListener(item -> {
                     new AlertDialog.Builder(FriendListActivity.this)
@@ -225,13 +224,12 @@ public class FriendListActivity extends AppCompatActivity {
                             .show();
                 });
 
-        recyclerView.setAdapter(messengerListAdapter);
+        recyclerView.setAdapter(friendListAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        friendListViewModel.getUser().observe(this, (user) -> messengerListAdapter.setFriends(user.friends));
+        friendListViewModel.getUser().observe(this, (user) -> friendListAdapter.setFriends(user.friends));
         // repository.messageSetupTest();
         // repository.getChatTest();
-        // repository.newMessageTest("3DsCbONOiKeAkA1NyCHakNkNxIo1");
         friendListViewModel.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", new DataChangedListener<List<Message>>() {
             @Override
             public void onDataChanged(List<Message> data) {

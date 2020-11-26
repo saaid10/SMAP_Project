@@ -8,7 +8,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -22,7 +21,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
-public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdapter.MessengerViewHolder> {
+public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.FriendViewHolder> {
     public interface OnFriendClickListener {
         void onFriendClick(Friend friend);
     }
@@ -35,19 +34,17 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
 
     private Repository repository;
 
-    public MessengerListAdapter(Context context) {
+    public FriendListAdapter(Context context) {
         this.context = context;
         layoutInflater = LayoutInflater.from(context);
-        // this.clickListener = clickListener;
-        // this.longClickListener = longClickListener;
         repository = Repository.getInstance(context.getApplicationContext());
     }
 
-    public static class MessengerViewHolder extends RecyclerView.ViewHolder {
+    public static class FriendViewHolder extends RecyclerView.ViewHolder {
         private TextView txtName;
         private ImageView profilePicture;
 
-        public MessengerViewHolder(@NonNull View view) {
+        public FriendViewHolder(@NonNull View view) {
             super(view);
             txtName = view.findViewById(R.id.txtName);
             profilePicture = view.findViewById(R.id.profilePicture);
@@ -57,13 +54,13 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
 
     @NonNull
     @Override
-    public MessengerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public FriendViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View itemView = layoutInflater.inflate(R.layout.activity_list_item, parent, false);
-        return new MessengerViewHolder(itemView);
+        return new FriendViewHolder(itemView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MessengerViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull FriendViewHolder holder, int position) {
         if (getItemCount() > 0) {
             Friend current = friends.get(position);
 
@@ -111,12 +108,12 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
         notifyDataSetChanged();
     }
 
-    public MessengerListAdapter setOnClickListener(OnFriendClickListener listener) {
+    public FriendListAdapter setOnClickListener(OnFriendClickListener listener) {
         this.clickListener = listener;
         return this;
     }
 
-    public MessengerListAdapter setOnLongClickListener(OnFriendClickListener listener) {
+    public FriendListAdapter setOnLongClickListener(OnFriendClickListener listener) {
         this.longClickListener = listener;
         return this;
     }

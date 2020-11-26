@@ -50,6 +50,9 @@ public class Repository {
 
     private final Map<DatabaseReference, ValueEventListener> listeners = new HashMap<>();
 
+    private String currentChadId;
+    private final Map<DatabaseReference, ValueEventListener> chadListener = new HashMap<>();
+
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
             synchronized (Repository.class) {
@@ -96,10 +99,9 @@ public class Repository {
         return usersCloseTo;
     }
 
-    public LiveData<List<Message>> getMessages(String chadId) {
+    public LiveData<List<Message>> getMessages() {
         if (messages == null) {
             messages = new MutableLiveData<>();
-            setupMessages(chadId);
         }
         return messages;
     }
@@ -354,6 +356,12 @@ public class Repository {
     }
 
     private void setupMessages(String chadId) {
+        if (currentChadId != null && !chadId.equals(currentChadId)) {
+            for (Map.Entry<DatabaseReference, ValueEventListener> listener : chadListener.entrySet()) {
+                listener.getKey().removeEventListener(listener.getValue());
+            }
+        }
+        currentChadId = chadId;
         DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
         ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
             @Override
@@ -373,6 +381,7 @@ public class Repository {
             }
         });
 
+        chadListener.put(ref, listener);
         listeners.put(ref, listener);
     }
 
@@ -463,6 +472,7 @@ public class Repository {
         getApplicationUser().removeObserver(newMessageTestObserver);
     }
 
+    int i = 0;
     public void newMessageTest(String friendUid) {
         newMessageTestObserver = new Observer<User>() {
             @Override
@@ -474,7 +484,8 @@ public class Repository {
                         String key2 = ref2.push().getKey();
 
                         Message message = new Message();
-                        message.content = "Hello World";
+                        message.content = "Hello World" + i;
+                        i++;
                         message.senderDisplayName = user.displayName;
                         message.senderUid = user.uid;
                         message.setTimestamp();
@@ -491,6 +502,37 @@ public class Repository {
         };
 
         getApplicationUser().observeForever(newMessageTestObserver);
+    }
+
+    public void setActiveChat(String friendUid) {
+        getApplicationUserOnce((user) -> {
+            databaseReference.child(Constants.CHADS).child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    setupMessages(snapshot.getValue(Chat.class).chatId);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        });
+    }
+
+    public void sendNewMessage(String message) {
+        getApplicationUserOnce((user) -> {
+            DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(currentChadId);
+            String key = ref.push().getKey();
+
+            Message newMessage = new Message();
+            newMessage.senderUid = user.uid;
+            newMessage.setTimestamp();
+            newMessage.senderDisplayName = user.displayName;
+            newMessage.content = message;
+
+            ref.child(key).setValue(newMessage);
+        });
     }
 }
 

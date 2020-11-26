@@ -44,10 +44,15 @@ public class FriendListViewModel extends AndroidViewModel {
     }
 
     public void getMessagesFromChadId(String chadId, DataChangedListener<List<Message>> callback) {
+        // repository.newMessageTest("7U9M1wBc2NOqiKyXg407n74ODvO2");
         repository.getMessagesFromChadId(chadId, callback);
     }
 
     public void deleteFriend(String friendUid) {
         repository.deleteFriend(friendUid);
+    }
+
+    public void setActiveChat(String friendUid) {
+        repository.setActiveChat(friendUid);
     }
 }
