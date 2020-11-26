@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- // Inspiration taken from https://sendbird.com/blog/android-chat-tutorial-building-a-messaging-ui -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 

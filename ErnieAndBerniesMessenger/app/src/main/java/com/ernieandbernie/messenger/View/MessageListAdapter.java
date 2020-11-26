@@ -15,6 +15,8 @@ import com.ernieandbernie.messenger.R;
 
 import java.util.List;
 
+
+// MessengerListAdapter is a modification of https://sendbird.com/blog/android-chat-tutorial-building-a-messaging-ui
 public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_MESSAGE_SENT = 1;
     private static final int VIEW_TYPE_MESSAGE_RECEIVED = 2;
