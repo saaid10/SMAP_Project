@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.ernieandbernie.messenger.Models.Friend;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.R;
@@ -70,6 +71,7 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
                     Glide.with(holder.profilePicture.getContext())
                             .load(snapshot.getValue(String.class))
                             .placeholder(R.drawable.ic_default_user)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
                             .into(holder.profilePicture);
                 }
 

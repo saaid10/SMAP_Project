@@ -1,6 +1,5 @@
 package com.ernieandbernie.messenger.Activity;
 
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -12,16 +11,19 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.Models.User;
 import com.ernieandbernie.messenger.R;
+import com.ernieandbernie.messenger.View.MapsViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -36,17 +38,16 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-
+    private static final String TAG = "MapsActivity";
     private GoogleMap mMap;
-    private Repository repository;
     private HashMap<String, Marker> markers = new HashMap<>();
+    private MapsViewModel mapsViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        repository = Repository.getInstance(getApplicationContext());
-
+        mapsViewModel = new ViewModelProvider(this).get(MapsViewModel.class);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -67,12 +68,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         moveCamera();
         addPotentialFriendsToMap();
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
-            public boolean onMarkerClick(Marker marker) {
+            public void onInfoWindowClick(Marker marker) {
                 // Don't send friend request to yourself...
-                if (marker.getTag().equals(repository.getFirebaseUser().getUid()))
-                    return false;
+                if (mapsViewModel.getFirebaseUser().getUid().equals(marker.getTag()))
+                    return;
 
 
                 new AlertDialog.Builder(MapsActivity.this)
@@ -81,7 +82,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                repository.sendFriendRequest((String) marker.getTag());
+                                mapsViewModel.sendFriendRequest((String) marker.getTag());
                             }
                         })
                         .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
@@ -91,13 +92,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             }
                         })
                         .show();
-                return false;
             }
         });
     }
 
     private void addPotentialFriendsToMap() {
-        repository.getUsersCloseTo().observe(this, new Observer<List<User>>() {
+        mapsViewModel.getUsersCloseTo().observe(this, new Observer<List<User>>() {
             @Override
             public void onChanged(List<User> users) {
                 clearMarkers();
@@ -108,11 +108,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // Set<String> friendIds = applicationUser.getFriendUids();
                 for (User user : users) {
-                    if (user.getFriendUids().contains(repository.getFirebaseUser().getUid())) {
+                    if (user.getFriendUids().contains(mapsViewModel.getFirebaseUser().getUid())) {
                         continue;
                     }
                     LatLng userLocation = new LatLng(user.latitude, user.longitude);
-                    if (user.uid.equals(repository.getFirebaseUser().getUid())) {
+                    if (user.uid.equals(mapsViewModel.getFirebaseUser().getUid())) {
                         addMarker(user, getString(R.string.you_are_here), userLocation);
                     } else {
                         addMarker(user, user.displayName, userLocation);
@@ -137,39 +137,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void moveCamera() {
-        repository.getApplicationUserOnce((applicationUser) -> {
+        mapsViewModel.getApplicationUserOnce((applicationUser) -> {
             LatLng userLocation = new LatLng(applicationUser.latitude, applicationUser.longitude);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13));
         });
     }
 
     private void loadMarkerIcon(String url, final Marker marker) {
-        Glide.with(this).asBitmap().fitCenter().load(url).into(new CustomTarget<Bitmap>(90, 90) {
-            @Override
-            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                if (marker.getTag() == null) return;
-                BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resource);
-                marker.setIcon(icon);
-                markers.put((String) marker.getTag(), marker);
-            }
+        Glide.with(this)
+                .asBitmap()
+                .fitCenter()
+                .load(url)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(new CustomTarget<Bitmap>(90, 90) {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        if (marker.getTag() == null) return;
+                        BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resource);
+                        marker.setIcon(icon);
+                        markers.put((String) marker.getTag(), marker);
+                    }
 
-            @Override
-            public void onLoadCleared(@Nullable Drawable placeholder) {
-            }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
 
-            @Override
-            public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                super.onLoadFailed(errorDrawable);
-                if (marker.getTag() == null) return;
-                try {
-                    BitmapDescriptor markerIcon = getBitmapDescriptor(R.drawable.ic_default_user);
-                    marker.setIcon(markerIcon);
-                } catch (Exception e) {
-                    Log.d("HEKJ", "onLoadFailed: " + e.getLocalizedMessage());
-                }
-                markers.put((String) marker.getTag(), marker);
-            }
-        });
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        super.onLoadFailed(errorDrawable);
+                        if (marker.getTag() == null) return;
+                        try {
+                            BitmapDescriptor markerIcon = getBitmapDescriptor(R.drawable.ic_default_user);
+                            marker.setIcon(markerIcon);
+                        } catch (Exception e) {
+                            Log.d(TAG, "onLoadFailed: " + e.getLocalizedMessage());
+                        }
+                        markers.put((String) marker.getTag(), marker);
+                    }
+                });
     }
 
 

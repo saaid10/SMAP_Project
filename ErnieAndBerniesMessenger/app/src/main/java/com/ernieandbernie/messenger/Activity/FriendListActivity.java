@@ -2,6 +2,7 @@ package com.ernieandbernie.messenger.Activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -46,13 +48,11 @@ import java.util.List;
 public class FriendListActivity extends AppCompatActivity {
 
     private static final String TAG = "FriendListActivity";
-    private Repository repository;
     private FusedLocationProviderClient fusedLocationProviderClient;
 
 
     // View bindings
     private Button btnProfilePic, btnAddFriends;
-
     private FriendListViewModel friendListViewModel;
 
     // Register the permissions callback, which handles the user's response to the
@@ -70,6 +70,23 @@ public class FriendListActivity extends AppCompatActivity {
                     // same time, respect the user's decision. Don't link to system
                     // settings in an effort to convince the user to change their
                     // decision.
+
+                    new AlertDialog.Builder(FriendListActivity.this)
+                            .setTitle("Location")
+                            .setMessage("Please allow this app to use locations. Other users will be unable to send you friend request if you deny")
+                            .setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                                }
+                            })
+                            .setNegativeButton("Don't allow", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Do nothing
+                                }
+                            })
+                            .show();
                 }
             });
 
@@ -79,7 +96,7 @@ public class FriendListActivity extends AppCompatActivity {
                     if (result.getData() == null) {
                         return;
                     }
-                    repository.uploadProfilePicture(result.getData().getData());
+                    friendListViewModel.uploadProfilePicture(result.getData().getData());
                 }
             });
 
@@ -131,7 +148,7 @@ public class FriendListActivity extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     stopService(new Intent(FriendListActivity.this, MessengerService.class));
-                    repository.clearRepository();
+                    friendListViewModel.clearRepository();
                     Intent intent = new Intent(FriendListActivity.this, FirebaseAuthActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
@@ -150,7 +167,7 @@ public class FriendListActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(Location location) {
                     if (location != null)
-                        repository.updateCurrentUserLocationInDB(new LatLng(location.getLatitude(), location.getLongitude()));
+                        friendListViewModel.updateCurrentUserLocationInDB(new LatLng(location.getLatitude(), location.getLongitude()));
                 }
             });
         } else {
@@ -161,7 +178,7 @@ public class FriendListActivity extends AppCompatActivity {
 
 
     private void setup() {
-        repository = Repository.getInstance(getApplicationContext());
+        friendListViewModel = new ViewModelProvider(this).get(FriendListViewModel.class);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         // View Bindings
@@ -193,19 +210,17 @@ public class FriendListActivity extends AppCompatActivity {
         recyclerView.setAdapter(messengerListAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        friendListViewModel = new ViewModelProvider(this).get(FriendListViewModel.class);
-
         friendListViewModel.getUser().observe(this, (user) -> messengerListAdapter.setFriends(user.friends));
         // repository.messageSetupTest();
         // repository.getChatTest();
         // repository.newMessageTest("3DsCbONOiKeAkA1NyCHakNkNxIo1");
-        repository.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", new DataChangedListener<List<Message>>() {
+        friendListViewModel.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", new DataChangedListener<List<Message>>() {
             @Override
             public void onDataChanged(List<Message> data) {
                 Toast.makeText(getApplicationContext(), data.toString(), Toast.LENGTH_LONG).show();
             }
         });
-        repository.getMessagesFromChadId("-MMuSp6xRUfh8mDRBW8b", new DataChangedListener<List<Message>>() {
+        friendListViewModel.getMessagesFromChadId("-MMuSp6xRUfh8mDRBW8b", new DataChangedListener<List<Message>>() {
             @Override
             public void onDataChanged(List<Message> data) {
                 Toast.makeText(getApplicationContext(), data.toString(), Toast.LENGTH_LONG).show();
