@@ -18,4 +18,11 @@
     <string name="accept">Accepter</string>
     <string name="decline">Afslå</string>
     <string name="service_name">%s Service</string>
+    <string name="location">Placering</string>
+    <string name="location_permission_alert">Venlist lad denne app bruge din placering. Andre bruger vil ikke være istand til at sende dig venne anmodinger, hvis du afslår.</string>
+    <string name="allow">Tillad</string>
+    <string name="dont_allow">Afslå</string>
+    <string name="delete_friend">Slet ven</string>
+    <string name="delete_friend_msg">Vil du gerne slette %s som din ven</string>
+    <string name="enter_message">Skriv besked</string>
 </resources>
