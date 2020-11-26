@@ -17,4 +17,5 @@ public class Constants {
     public static final String REQUESTS = "requests";
     public static final String CHADS = "chads";
     public static final String MESSAGES = "messages";
+    public static final String UUID = "uuid";
 }

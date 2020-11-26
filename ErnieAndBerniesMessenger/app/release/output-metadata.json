@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.ernieandbernie.messenger",
+  "variantName": "processReleaseResources",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "versionCode": 2,
+      "versionName": "v1.0.2 Build: 240",
+      "outputFile": "Ernie And Bernies Messenger-v1.0.2.apk"
+    }
+  ]
+}

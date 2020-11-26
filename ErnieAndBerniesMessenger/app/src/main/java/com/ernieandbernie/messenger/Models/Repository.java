@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -327,7 +328,9 @@ public class Repository {
     private Observer<User> observer1;
 
 
-    /** Not sure this works as intended. Maybe use function below: setupMessages */
+    /**
+     * Not sure this works as intended. Maybe use function below: setupMessages
+     */
     public void getMessagesFromChadId(String chadId, DataChangedListener<List<Message>> callback) {
         DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
         ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
@@ -371,6 +374,29 @@ public class Repository {
         });
 
         listeners.put(ref, listener);
+    }
+
+    public void deleteFriend(String friendId) {
+        databaseReference.child(Constants.USERS)
+                .child(firebaseUser.getUid())
+                .child(Constants.FRIENDS)
+                .orderByChild(Constants.UUID)
+                .equalTo(friendId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot child : snapshot.getChildren()) {
+                            if (child.getKey() != null) {
+                                snapshot.getRef().child(child.getKey()).removeValue();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
     }
 
     public void getChatTest() {

@@ -17,4 +17,10 @@
     <string name="accept">Accept</string>
     <string name="decline">Decline</string>
     <string name="service_name">%s Service</string>
+    <string name="location">Location</string>
+    <string name="location_permission_alert">Please allow this app to use locations. Other users will be unable to send you friend request if you deny</string>
+    <string name="allow">Allow</string>
+    <string name="dont_allow">Don\'t allow</string>
+    <string name="delete_friend">Delete Friend</string>
+    <string name="delete_friend_msg">\"Would you like to delete %s from your friends?\"</string>
 </resources>

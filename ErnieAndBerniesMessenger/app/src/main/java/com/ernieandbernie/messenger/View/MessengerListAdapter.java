@@ -28,16 +28,18 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
     }
 
     private final LayoutInflater layoutInflater;
-    private final OnFriendClickListener clickListener;
+    private OnFriendClickListener clickListener;
+    private OnFriendClickListener longClickListener;
     private List<Friend> friends;
     private Context context;
 
     private Repository repository;
 
-    public MessengerListAdapter(Context context, OnFriendClickListener clickListener) {
+    public MessengerListAdapter(Context context) {
         this.context = context;
         layoutInflater = LayoutInflater.from(context);
-        this.clickListener = clickListener;
+        // this.clickListener = clickListener;
+        // this.longClickListener = longClickListener;
         repository = Repository.getInstance(context.getApplicationContext());
     }
 
@@ -82,18 +84,41 @@ public class MessengerListAdapter extends RecyclerView.Adapter<MessengerListAdap
             });
 
             holder.txtName.setText(current.getDisplayName());
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    clickListener.onFriendClick(current);
-                }
-            });
+
+            if (clickListener != null) {
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        clickListener.onFriendClick(current);
+                    }
+                });
+            }
+
+            if (this.longClickListener != null) {
+                holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        longClickListener.onFriendClick(current);
+                        return true;
+                    }
+                });
+            }
         }
     }
 
     public void setFriends(List<Friend> friends) {
         this.friends = friends;
         notifyDataSetChanged();
+    }
+
+    public MessengerListAdapter setOnClickListener(OnFriendClickListener listener) {
+        this.clickListener = listener;
+        return this;
+    }
+
+    public MessengerListAdapter setOnLongClickListener(OnFriendClickListener listener) {
+        this.longClickListener = listener;
+        return this;
     }
 
     @Override

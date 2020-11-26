@@ -40,7 +40,7 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private static final String TAG = "MapsActivity";
     private GoogleMap mMap;
-    private HashMap<String, Marker> markers = new HashMap<>();
+    private final HashMap<String, Marker> markers = new HashMap<>();
     private MapsViewModel mapsViewModel;
 
     @Override

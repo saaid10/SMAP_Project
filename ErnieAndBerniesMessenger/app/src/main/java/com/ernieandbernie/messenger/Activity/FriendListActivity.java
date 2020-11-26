@@ -72,15 +72,15 @@ public class FriendListActivity extends AppCompatActivity {
                     // decision.
 
                     new AlertDialog.Builder(FriendListActivity.this)
-                            .setTitle("Location")
-                            .setMessage("Please allow this app to use locations. Other users will be unable to send you friend request if you deny")
-                            .setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                            .setTitle(R.string.location)
+                            .setMessage(R.string.location_permission_alert)
+                            .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
                                 }
                             })
-                            .setNegativeButton("Don't allow", new DialogInterface.OnClickListener() {
+                            .setNegativeButton(R.string.dont_allow, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     // Do nothing
@@ -199,13 +199,31 @@ public class FriendListActivity extends AppCompatActivity {
 
 
         RecyclerView recyclerView = findViewById(R.id.rcView);
-        final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this, item -> {
-            // listViewModel.loadOne(item.getId());
-            // Intent i = new Intent(getApplicationContext(), DetailsActivity.class);
-            // startActivity(i);
-
-            Toast.makeText(getApplicationContext(), item.getDisplayName(), Toast.LENGTH_SHORT).show();
-        });
+        final MessengerListAdapter messengerListAdapter = new MessengerListAdapter(this)
+                .setOnClickListener(item -> {
+                    // listViewModel.loadOne(item.getId());
+                    // Intent i = new Intent(getApplicationContext(), DetailsActivity.class);
+                    // startActivity(i);
+                    Toast.makeText(getApplicationContext(), item.getDisplayName(), Toast.LENGTH_SHORT).show();
+                })
+                .setOnLongClickListener(item -> {
+                    new AlertDialog.Builder(FriendListActivity.this)
+                            .setTitle(R.string.delete_friend)
+                            .setMessage(getString(R.string.delete_friend_msg, item.getDisplayName()))
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    friendListViewModel.deleteFriend(item.uuid);
+                                }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Do nothing
+                                }
+                            })
+                            .show();
+                });
 
         recyclerView.setAdapter(messengerListAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
