@@ -78,12 +78,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         View view;
 
         if (viewType == VIEW_TYPE_MESSAGE_SENT) {
-            view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.messeage_sent, parent, false);
+            view = layoutInflater.inflate(R.layout.messeage_sent, parent, false);
             return new SentMessageViewHolder(view);
         } else if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
-            view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.message_received, parent, false);
+            view = layoutInflater.inflate(R.layout.message_received, parent, false);
             return new ReceivedMessageViewHolder(view);
         }
 

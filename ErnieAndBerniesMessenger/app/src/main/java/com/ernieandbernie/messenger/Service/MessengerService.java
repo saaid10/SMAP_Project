@@ -24,6 +24,7 @@ import androidx.lifecycle.Observer;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.ernieandbernie.messenger.Models.Repository;
@@ -111,6 +112,7 @@ public class MessengerService extends Service {
                 .asBitmap()
                 .load(iconUrl)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .apply(RequestOptions.circleCropTransform())
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {

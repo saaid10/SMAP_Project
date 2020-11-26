@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.ernieandbernie.messenger.Models.User;
@@ -149,6 +150,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .fitCenter()
                 .load(url)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .apply(RequestOptions.circleCropTransform())
                 .into(new CustomTarget<Bitmap>(90, 90) {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {

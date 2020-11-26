@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.ernieandbernie.messenger.Models.Friend;
 import com.ernieandbernie.messenger.Models.Repository;
 import com.ernieandbernie.messenger.R;
@@ -71,6 +72,7 @@ public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.Fr
                             .load(snapshot.getValue(String.class))
                             .placeholder(R.drawable.ic_default_user)
                             .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .apply(RequestOptions.circleCropTransform())
                             .into(holder.profilePicture);
                 }
 
