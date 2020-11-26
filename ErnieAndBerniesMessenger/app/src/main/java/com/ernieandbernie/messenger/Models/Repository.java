@@ -30,6 +30,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,7 @@ public class Repository {
 
     private String currentChadId;
     private final Map<DatabaseReference, ValueEventListener> chadListener = new HashMap<>();
+    private String currentFriendUid;
 
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
@@ -356,11 +358,6 @@ public class Repository {
     }
 
     private void setupMessages(String chadId) {
-        if (currentChadId != null && !chadId.equals(currentChadId)) {
-            for (Map.Entry<DatabaseReference, ValueEventListener> listener : chadListener.entrySet()) {
-                listener.getKey().removeEventListener(listener.getValue());
-            }
-        }
         currentChadId = chadId;
         DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
         ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
@@ -429,87 +426,20 @@ public class Repository {
                 });
     }
 
-    public void getChatTest() {
-        observer1 = new Observer<User>() {
-            @Override
-            public void onChanged(User user) {
-                databaseReference.child(Constants.CHADS).child(user.uid).child("BU5dfBrUhZWKZQts2eHUKPj9ERj1").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        Log.d(TAG, "onDataChange: " + snapshot);
-
-                        databaseReference.child(Constants.MESSAGES).child(snapshot.getValue(String.class)).addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                Log.d(TAG, "onDataChange: " + snapshot);
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-                removeObserver1();
-            }
-        };
-        getApplicationUser().observeForever(observer1);
-    }
-
-    private void removeObserver1() {
-        getApplicationUser().removeObserver(observer1);
-    }
-
-    private Observer<User> newMessageTestObserver;
-
-    private void removeNewMessageTestObserver() {
-        getApplicationUser().removeObserver(newMessageTestObserver);
-    }
-
-    int i = 0;
-    public void newMessageTest(String friendUid) {
-        newMessageTestObserver = new Observer<User>() {
-            @Override
-            public void onChanged(User user) {
-                databaseReference.child(Constants.CHADS).child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        DatabaseReference ref2 = databaseReference.child(Constants.MESSAGES).child(snapshot.getValue(Chat.class).chatId);
-                        String key2 = ref2.push().getKey();
-
-                        Message message = new Message();
-                        message.content = "Hello World" + i;
-                        i++;
-                        message.senderDisplayName = user.displayName;
-                        message.senderUid = user.uid;
-                        message.setTimestamp();
-                        ref2.child(key2).setValue(message);
-                        removeNewMessageTestObserver();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-            }
-        };
-
-        getApplicationUser().observeForever(newMessageTestObserver);
-    }
-
     public void setActiveChat(String friendUid) {
+        messages.postValue(Collections.emptyList());
+        currentFriendUid = friendUid;
         getApplicationUserOnce((user) -> {
             databaseReference.child(Constants.CHADS).child(user.uid).child(friendUid).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    setupMessages(snapshot.getValue(Chat.class).chatId);
+                    for (Map.Entry<DatabaseReference, ValueEventListener> listener : chadListener.entrySet()) {
+                        listener.getKey().removeEventListener(listener.getValue());
+                    }
+
+                    Chat chad = snapshot.getValue(Chat.class);
+                    if (chad == null) return;
+                    setupMessages(chad.getChatId());
                 }
 
                 @Override
@@ -532,6 +462,20 @@ public class Repository {
             newMessage.content = message;
 
             ref.child(key).setValue(newMessage);
+        });
+    }
+
+    public void getCurrentFriend(DataChangedListener<User> callback) {
+        databaseReference.child(Constants.USERS).child(currentFriendUid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                callback.onDataChanged(createUserFromSnapshot(snapshot));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
         });
     }
 }

@@ -19,7 +19,9 @@
         android:roundIcon="@mipmap/ic_launcher_icon_eb_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ErnieAndBerniesMessenger">
-        <activity android:name=".Activity.MessengerActivity"></activity>
+        <activity
+            android:name=".Activity.MessengerActivity"
+            android:windowSoftInputMode="adjustResize" />
 
         <receiver android:name=".Service.MessengerReceiver" />
 

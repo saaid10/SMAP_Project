@@ -34,4 +34,8 @@ public class MessengerViewModel extends AndroidViewModel {
     public void sendNewMessage(String message) {
         repository.sendNewMessage(message);
     }
+
+    public void getCurrentFriend(DataChangedListener<User> callback) {
+        repository.getCurrentFriend(callback);
+    }
 }

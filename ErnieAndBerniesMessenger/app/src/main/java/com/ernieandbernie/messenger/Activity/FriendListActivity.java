@@ -228,20 +228,6 @@ public class FriendListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         friendListViewModel.getUser().observe(this, (user) -> friendListAdapter.setFriends(user.friends));
-        // repository.messageSetupTest();
-        // repository.getChatTest();
-        friendListViewModel.getMessagesFromChadId("-MMuRt1BXGgi_N8CyC-u", new DataChangedListener<List<Message>>() {
-            @Override
-            public void onDataChanged(List<Message> data) {
-                Toast.makeText(getApplicationContext(), data.toString(), Toast.LENGTH_LONG).show();
-            }
-        });
-        friendListViewModel.getMessagesFromChadId("-MMuSp6xRUfh8mDRBW8b", new DataChangedListener<List<Message>>() {
-            @Override
-            public void onDataChanged(List<Message> data) {
-                Toast.makeText(getApplicationContext(), data.toString(), Toast.LENGTH_LONG).show();
-            }
-        });
     }
 
     private void pickImage() {

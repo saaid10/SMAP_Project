@@ -1,6 +1,7 @@
 package com.ernieandbernie.messenger.View;
 
 import android.content.Context;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,27 +36,33 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public static class SentMessageViewHolder extends RecyclerView.ViewHolder {
         public TextView messageContent;
+        public TextView txtTime;
 
         public SentMessageViewHolder(@NonNull View view) {
             super(view);
             messageContent = view.findViewById(R.id.messageContent);
+            txtTime = view.findViewById(R.id.txtTime);
         }
 
-        public void bind(Message message) {
+        public void bind(Context context, Message message) {
             messageContent.setText(message.content);
+            txtTime.setText(DateUtils.formatDateTime(context, Long.parseLong(message.timestamp) * 1000, DateUtils.FORMAT_SHOW_TIME));
         }
     }
 
     public static class ReceivedMessageViewHolder extends RecyclerView.ViewHolder {
         public TextView messageContent;
+        public TextView txtTime;
 
         public ReceivedMessageViewHolder(@NonNull View view) {
             super(view);
             messageContent = view.findViewById(R.id.messageContent);
+            txtTime = view.findViewById(R.id.txtTime);
         }
 
-        public void bind(Message message) {
+        public void bind(Context context, Message message) {
             messageContent.setText(message.content);
+            txtTime.setText(DateUtils.formatDateTime(context, Long.parseLong(message.timestamp) * 1000, DateUtils.FORMAT_SHOW_TIME));
         }
     }
 
@@ -91,10 +98,13 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Message message = messages.get(position);
+
         if (holder.getItemViewType() == VIEW_TYPE_MESSAGE_SENT) {
-            ((SentMessageViewHolder) holder).bind(message);
+            ((SentMessageViewHolder) holder).messageContent.setText(message.content);
+            ((SentMessageViewHolder) holder).txtTime.setText(DateUtils.formatDateTime(context, Long.parseLong(message.timestamp) * 1000, DateUtils.FORMAT_SHOW_TIME));
         } else if (holder.getItemViewType() == VIEW_TYPE_MESSAGE_RECEIVED) {
-            ((ReceivedMessageViewHolder) holder).bind(message);
+            ((ReceivedMessageViewHolder) holder).messageContent.setText(message.content);
+            ((ReceivedMessageViewHolder) holder).txtTime.setText(DateUtils.formatDateTime(context, Long.parseLong(message.timestamp) * 1000, DateUtils.FORMAT_SHOW_TIME));
         }
     }
 
