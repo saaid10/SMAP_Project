@@ -397,6 +397,27 @@ public class Repository {
 
                     }
                 });
+
+        databaseReference.child(Constants.USERS)
+                .child(friendId)
+                .child(Constants.FRIENDS)
+                .orderByChild(Constants.UUID)
+                .equalTo(firebaseUser.getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot child : snapshot.getChildren()) {
+                            if (child.getKey() != null) {
+                                snapshot.getRef().child(child.getKey()).removeValue();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
     }
 
     public void getChatTest() {
