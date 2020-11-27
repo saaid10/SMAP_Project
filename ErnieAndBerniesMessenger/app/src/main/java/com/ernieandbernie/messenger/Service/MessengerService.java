@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,13 +12,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleService;
 import androidx.lifecycle.Observer;
 
 import com.bumptech.glide.Glide;
@@ -41,7 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class MessengerService extends Service {
+public class MessengerService extends LifecycleService {
 
     private static final String SERVICE_CHANNEL = "Ernie And Bernie's Messenger";
     private static final String TAG = "Messenger Service";
@@ -50,7 +49,6 @@ public class MessengerService extends Service {
     private ExecutorService executorService;
     private Repository repository;
     Future<?> requestNotificationFuture;
-    private Observer<Request> requestObserver;
 
     public MessengerService() {
     }
@@ -72,15 +70,14 @@ public class MessengerService extends Service {
     }
 
     private void loadWork() {
-        requestObserver = new Observer<Request>() {
+        repository.getFriendRequests().observe(this, new Observer<Request>() {
             @Override
             public void onChanged(Request request) {
                 if (request == null) return;
 
                 requestNotificationFuture = executorService.submit(() -> createNotification(request));
             }
-        };
-        repository.getFriendRequests().observeForever(requestObserver);
+        });
     }
 
     private void createNotification(Request request) {
@@ -169,6 +166,7 @@ public class MessengerService extends Service {
     @Override
     public IBinder onBind(@NotNull Intent intent) {
         // TODO: Return the communication channel to the service.
+        super.onBind(intent);
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -179,7 +177,6 @@ public class MessengerService extends Service {
         if (requestNotificationFuture != null) {
             requestNotificationFuture.cancel(true);
         }
-        repository.getFriendRequests().removeObserver(requestObserver);
         super.onDestroy();
     }
 

@@ -13,6 +13,10 @@ import androidx.lifecycle.Observer;
 
 import com.ernieandbernie.messenger.Models.CallbackInterfaces.DataChangedListener;
 import com.ernieandbernie.messenger.Util.Constants;
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -41,6 +45,7 @@ public class Repository {
     private static volatile Repository INSTANCE;
     private final DatabaseReference databaseReference;
     private final StorageReference storageReference;
+    private final GeoFire geoFire;
     private final FirebaseUser firebaseUser;
     private final Context context;
 
@@ -48,12 +53,14 @@ public class Repository {
     private MutableLiveData<List<User>> usersCloseTo = new MutableLiveData<>();
     private MutableLiveData<Request> friendRequests;
     private MutableLiveData<List<Message>> messages = new MutableLiveData<>();
+    private MutableLiveData<List<Message>> messagesForNotification = new MutableLiveData<>();
 
     private final Map<DatabaseReference, ValueEventListener> listeners = new HashMap<>();
 
     private String currentChadId;
     private final Map<DatabaseReference, ValueEventListener> chadListener = new HashMap<>();
     private String currentFriendUid;
+    private GeoQuery geoQuery;
 
     public static Repository getInstance(final Context context) {
         if (INSTANCE == null) {
@@ -72,6 +79,7 @@ public class Repository {
         databaseReference = database.getReference();
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         storageReference = FirebaseStorage.getInstance().getReference();
+        geoFire = new GeoFire(databaseReference.child("geofire"));
         loadApplicationUser();
         loadUsersCloseToUser();
         setupFriendRequests();
@@ -114,6 +122,8 @@ public class Repository {
         childUpdates.put(Constants.LATITUDE, latLng.latitude);
         childUpdates.put(Constants.LONGITUDE, latLng.longitude);
         databaseReference.child(Constants.USERS).child(firebaseUser.getUid()).updateChildren(childUpdates);
+
+        geoFire.setLocation(firebaseUser.getUid(), new GeoLocation(latLng.latitude, latLng.longitude));
     }
 
     public void setCurrentUserDisplayName() {
@@ -213,7 +223,53 @@ public class Repository {
         getApplicationUserOnce(new DataChangedListener<User>() {
             @Override
             public void onDataChanged(User data) {
-                Query query = databaseReference
+                geoQuery = geoFire.queryAtLocation(new GeoLocation(data.latitude, data.longitude), 100);
+                geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+                    @Override
+                    public void onKeyEntered(String key, GeoLocation location) {
+                        databaseReference.child(Constants.USERS).child(key).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                User user = createUserFromSnapshot(snapshot);
+
+                                if (usersCloseTo.getValue() != null) {
+                                    List<User> users = usersCloseTo.getValue();
+                                    users.add(user);
+                                    usersCloseTo.postValue(users);
+                                } else {
+                                    usersCloseTo.postValue(Collections.singletonList(user));
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onKeyExited(String key) {
+
+                    }
+
+                    @Override
+                    public void onKeyMoved(String key, GeoLocation location) {
+
+                    }
+
+                    @Override
+                    public void onGeoQueryReady() {
+
+                    }
+
+                    @Override
+                    public void onGeoQueryError(DatabaseError error) {
+
+                    }
+                });
+
+                /*Query query = databaseReference
                         .child(Constants.USERS)
                         .orderByChild(Constants.LATITUDE)
                         .startAt(data.latitude - 1)
@@ -235,7 +291,7 @@ public class Repository {
                     }
                 });
 
-                listeners.put(query.getRef(), listener);
+                listeners.put(query.getRef(), listener);*/
             }
         });
 
@@ -322,14 +378,13 @@ public class Repository {
         for (Map.Entry<DatabaseReference, ValueEventListener> listener : listeners.entrySet()) {
             listener.getKey().removeEventListener(listener.getValue());
         }
+        geoQuery.removeAllListeners();
         friendRequests = new MutableLiveData<>();
         usersCloseTo = new MutableLiveData<>();
         applicationUser = new MutableLiveData<>();
         messages = new MutableLiveData<>();
         INSTANCE = null;
     }
-
-    private Observer<User> observer1;
 
 
     /**
@@ -424,6 +479,20 @@ public class Repository {
 
                     }
                 });
+
+        databaseReference.child(Constants.CHADS).child(firebaseUser.getUid()).child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Chat chat = snapshot.getValue(Chat.class);
+
+                databaseReference.child(Constants.MESSAGES).child(chat.getChatId()).removeValue();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     public void setActiveChat(String friendUid) {
@@ -470,6 +539,48 @@ public class Repository {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 callback.onDataChanged(createUserFromSnapshot(snapshot));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    public void test() {
+        databaseReference.child(Constants.CHADS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Chat chad = child.getValue(Chat.class);
+                    if (chad == null) continue;
+
+                    DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chad.getChatId());
+                    ValueEventListener listener = ref.orderByChild("timestamp").startAt(Long.toString(System.currentTimeMillis()/1000)).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Log.d(TAG, "onDataChange: " + snapshot);
+                            List<Message> messageList = new ArrayList<>();
+
+                            for(DataSnapshot child : snapshot.getChildren()) {
+                                messageList.add(child.getValue(Message.class));
+                            }
+
+                            if (messagesForNotification.getValue() != null) {
+                                messageList.addAll(messagesForNotification.getValue());
+                            }
+                            messagesForNotification.postValue(messageList);
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
+                    listeners.put(ref, listener);
+                }
             }
 
             @Override

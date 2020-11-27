@@ -12,7 +12,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -25,13 +24,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ernieandbernie.messenger.Models.CallbackInterfaces.DataChangedListener;
-import com.ernieandbernie.messenger.Models.Message;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
-import com.ernieandbernie.messenger.View.FriendListViewModel;
 import com.ernieandbernie.messenger.View.FriendListAdapter;
+import com.ernieandbernie.messenger.View.FriendListViewModel;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -42,7 +39,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
 public class FriendListActivity extends AppCompatActivity {
 
