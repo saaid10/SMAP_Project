@@ -50,7 +50,7 @@ public class Repository {
     private final Context context;
 
     private MutableLiveData<User> applicationUser = new MutableLiveData<>();
-    private MutableLiveData<List<User>> usersCloseTo = new MutableLiveData<>();
+    private MutableLiveData<List<User>> usersCloseTo = new MutableLiveData<>(new ArrayList<>());
     private MutableLiveData<Request> friendRequests;
     private MutableLiveData<List<Message>> messages = new MutableLiveData<>();
     private MutableLiveData<List<Message>> messagesForNotification = new MutableLiveData<>();
