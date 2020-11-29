@@ -25,4 +25,5 @@
     <string name="delete_friend">Slet ven</string>
     <string name="delete_friend_msg">Vil du gerne slette %s som din ven</string>
     <string name="enter_message">Skriv besked</string>
+    <string name="select_user">Vælg en bruger</string>
 </resources>

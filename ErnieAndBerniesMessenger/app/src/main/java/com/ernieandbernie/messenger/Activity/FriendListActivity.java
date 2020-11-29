@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -20,10 +21,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.ernieandbernie.messenger.Fragtment.ChatListFragtment;
+import com.ernieandbernie.messenger.Models.Friend;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
@@ -39,6 +44,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class FriendListActivity extends AppCompatActivity {
 
@@ -49,6 +55,9 @@ public class FriendListActivity extends AppCompatActivity {
     // View bindings
     private Button btnProfilePic, btnAddFriends;
     private FriendListViewModel friendListViewModel;
+    private ChatListFragtment chatListFragtment;
+    private FragmentTransaction transaction;
+
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog. Save the return value, an instance of
@@ -100,11 +109,12 @@ public class FriendListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friendlist);
 
+
         Toolbar myToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         setup();
         updateCurrentUserLocationInDB();
-
+        openChatFragment(chatListFragtment.newInstance());
         if (savedInstanceState == null)
             startService(new Intent(this, MessengerService.class));
     }
@@ -230,5 +240,11 @@ public class FriendListActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType(Constants.CONTENT_TYPE_IMAGE);
         pickImageLauncher.launch(intent);
+    }
+
+    public void openChatFragment(Fragment fragment) {
+        transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.chat_frag, fragment);
+        transaction.commit();
     }
 }

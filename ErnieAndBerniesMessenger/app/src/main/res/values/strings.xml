@@ -24,4 +24,6 @@
     <string name="delete_friend">Delete friend</string>
     <string name="delete_friend_msg">Would you like to delete %s from your friends?</string>
     <string name="enter_message">Enter message</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="select_user">Select an user</string>
 </resources>

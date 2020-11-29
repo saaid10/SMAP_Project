@@ -9,15 +9,17 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rcView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="657dp"
+        android:layout_height="717dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:scrollbars="vertical"
         app:layout_constraintBottom_toTopOf="@+id/btnAddFriends"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.023"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/my_toolbar"
+        app:layout_constraintVertical_bias="1.0"
         tools:listitem="@layout/activity_list_item" />
 
     <Button
@@ -54,11 +56,26 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:theme="@style/Theme.ErnieAndBerniesMessenger"
-        app:titleTextColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:menu="@menu/menu"
-        app:popupTheme="@style/Theme.ErnieAndBerniesMessenger"/>
+        app:popupTheme="@style/Theme.ErnieAndBerniesMessenger"
+        app:titleTextColor="@android:color/white" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.55" />
+
+    <FrameLayout
+        android:id="@+id/chat_frag"
+        android:layout_width="600dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnProfilePic"
+        app:layout_constraintTop_toBottomOf="@+id/my_toolbar"></FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
