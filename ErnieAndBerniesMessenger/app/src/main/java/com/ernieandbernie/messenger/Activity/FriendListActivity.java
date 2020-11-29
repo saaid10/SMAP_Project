@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ernieandbernie.messenger.Fragtment.ChatListFragtment;
+import com.ernieandbernie.messenger.Fragtment.DetailFragtment;
 import com.ernieandbernie.messenger.Models.Friend;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
@@ -49,14 +50,22 @@ import java.util.List;
 public class FriendListActivity extends AppCompatActivity {
 
     private static final String TAG = "FriendListActivity";
+    private static final String LIST_FRAG = "list_fragment";
+    private static final String DETAIL_FRAG = "detail_fragtment";
     private FusedLocationProviderClient fusedLocationProviderClient;
 
 
     // View bindings
     private Button btnProfilePic, btnAddFriends;
     private FriendListViewModel friendListViewModel;
+
     private ChatListFragtment chatListFragtment;
+    private DetailFragtment detailFragtment;
     private FragmentTransaction transaction;
+
+    private FrameLayout chatlayout;
+    private RecyclerView chatlist;
+
 
 
     // Register the permissions callback, which handles the user's response to the
@@ -109,6 +118,8 @@ public class FriendListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friendlist);
 
+        chatlayout = (FrameLayout)findViewById(R.id.chat_frag);
+        chatlist = (RecyclerView)findViewById(R.id.rcView);
 
         Toolbar myToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
@@ -117,6 +128,18 @@ public class FriendListActivity extends AppCompatActivity {
         openChatFragment(chatListFragtment.newInstance());
         if (savedInstanceState == null)
             startService(new Intent(this, MessengerService.class));
+
+
+//       this part makes it crash if i try to unblock it
+//        if(savedInstanceState == null) {
+//            chatListFragtment = new ChatListFragtment();
+//            detailFragtment = new DetailFragtment();
+//
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(R.id.rcView, chatListFragtment, LIST_FRAG)
+//                    .replace(R.id.chat_frag, detailFragtment, DETAIL_FRAG)
+//                    .commit();
+//        }
     }
 
     @Override
@@ -206,7 +229,6 @@ public class FriendListActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.rcView);
         final FriendListAdapter friendListAdapter = new FriendListAdapter(this)
                 .setOnClickListener(item -> {
-                    // listViewModel.loadOne(item.getId());
                     friendListViewModel.setActiveChat(item.getUuid());
                     Intent i = new Intent(FriendListActivity.this, MessengerActivity.class);
                     startActivity(i);
