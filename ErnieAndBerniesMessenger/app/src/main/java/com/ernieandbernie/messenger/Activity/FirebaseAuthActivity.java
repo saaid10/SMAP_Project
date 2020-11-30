@@ -76,8 +76,7 @@ public class FirebaseAuthActivity extends AppCompatActivity {
 
     public void createSignInIntent() {
         List<AuthUI.IdpConfig> providers = Collections.singletonList(
-                new AuthUI.IdpConfig.EmailBuilder().build());
-
+                new AuthUI.IdpConfig.EmailBuilder().setRequireName(true).build());
         authUILauncher.launch(AuthUI.getInstance()
                 .createSignInIntentBuilder()
                 .setAvailableProviders(providers)

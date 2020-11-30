@@ -7,13 +7,15 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.2"
 
+
+    // Modified of https://stackoverflow.com/a/23265711
     def versionPropsFile = file('version.properties')
     def value = 0
     Properties versionProps = new Properties()
     if (!versionPropsFile.exists()) {
         versionProps['VERSION_PATCH'] = "0"
         versionProps['VERSION_NUMBER'] = "0"
-        versionProps['VERSION_BUILD'] = "0" // I set it to minus one so the first build is 0 which isn't super important.
+        versionProps['VERSION_BUILD'] = "0"
         versionProps.store(versionPropsFile.newWriter(), null)
     }
 
