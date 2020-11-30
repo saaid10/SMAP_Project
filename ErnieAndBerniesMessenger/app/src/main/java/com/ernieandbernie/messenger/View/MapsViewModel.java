@@ -1,7 +1,6 @@
 package com.ernieandbernie.messenger.View;
 
 import android.app.Application;
-import android.app.usage.NetworkStats;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -16,8 +15,8 @@ import java.util.List;
 
 public class MapsViewModel extends AndroidViewModel {
 
-    private Repository repository;
-    private LiveData<User> user;
+    private final Repository repository;
+    private final LiveData<User> user;
 
     public MapsViewModel(@NonNull Application application) {
         super(application);
@@ -39,5 +38,9 @@ public class MapsViewModel extends AndroidViewModel {
 
     public void getApplicationUserOnce(DataChangedListener<User> callback) {
         repository.getApplicationUserOnce(callback);
+    }
+
+    public LiveData<User> getApplicationUser() {
+        return user;
     }
 }

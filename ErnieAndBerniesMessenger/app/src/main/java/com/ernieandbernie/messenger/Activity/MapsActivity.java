@@ -68,7 +68,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         moveCamera();
-        addPotentialFriendsToMap();
+
+        mapsViewModel.getApplicationUser().observe(this, new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                addPotentialFriendsToMap();
+            }
+        });
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
@@ -107,7 +113,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return;
                 }
 
-                // Set<String> friendIds = applicationUser.getFriendUids();
                 for (User user : users) {
                     if (user.getFriendUids().contains(mapsViewModel.getFirebaseUser().getUid())) {
                         continue;

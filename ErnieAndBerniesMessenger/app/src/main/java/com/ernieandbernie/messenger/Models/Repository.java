@@ -2,14 +2,11 @@ package com.ernieandbernie.messenger.Models;
 
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 import com.ernieandbernie.messenger.Models.CallbackInterfaces.DataChangedListener;
 import com.ernieandbernie.messenger.Util.Constants;
@@ -27,7 +24,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -53,7 +49,6 @@ public class Repository {
     private MutableLiveData<List<User>> usersCloseTo = new MutableLiveData<>(new ArrayList<>());
     private MutableLiveData<Request> friendRequests;
     private MutableLiveData<List<Message>> messages = new MutableLiveData<>();
-    private MutableLiveData<List<Message>> messagesForNotification = new MutableLiveData<>();
 
     private final Map<DatabaseReference, ValueEventListener> listeners = new HashMap<>();
 
@@ -81,7 +76,6 @@ public class Repository {
         storageReference = FirebaseStorage.getInstance().getReference();
         geoFire = new GeoFire(databaseReference.child("geofire"));
         loadApplicationUser();
-        loadUsersCloseToUser();
         setupFriendRequests();
     }
 
@@ -103,9 +97,9 @@ public class Repository {
 
     public LiveData<List<User>> getUsersCloseTo() {
         if (usersCloseTo == null) {
-            usersCloseTo = new MutableLiveData<>();
-            loadUsersCloseToUser();
+            usersCloseTo = new MutableLiveData<>(new ArrayList<>());
         }
+        loadUsersCloseToUser();
         return usersCloseTo;
     }
 
@@ -155,7 +149,6 @@ public class Repository {
         user.longitude = snapshot.child(Constants.LONGITUDE).getValue(Double.class);
         user.storageUri = snapshot.child(Constants.STORAGE_URI).getValue(String.class);
         user.uid = snapshot.getKey();
-        // user.friends = user.friends != null ? user.friends : new HashMap<>();
         for (DataSnapshot child : snapshot.child("friends").getChildren()) {
             user.friends.add(child.getValue(Friend.class));
         }
@@ -220,6 +213,7 @@ public class Repository {
     }
 
     private void loadUsersCloseToUser() {
+        resetUsersCloseTo();
         getApplicationUserOnce(new DataChangedListener<User>() {
             @Override
             public void onDataChanged(User data) {
@@ -268,30 +262,6 @@ public class Repository {
 
                     }
                 });
-
-                /*Query query = databaseReference
-                        .child(Constants.USERS)
-                        .orderByChild(Constants.LATITUDE)
-                        .startAt(data.latitude - 1)
-                        .endAt(data.latitude + 1);
-
-                ValueEventListener listener = query.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        List<User> users = new ArrayList<>();
-                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                            users.add(createUserFromSnapshot(dataSnapshot));
-                        }
-                        usersCloseTo.postValue(users);
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        makeToast(error.getMessage());
-                    }
-                });
-
-                listeners.put(query.getRef(), listener);*/
             }
         });
 
@@ -548,46 +518,11 @@ public class Repository {
         });
     }
 
-    public void test() {
-        databaseReference.child(Constants.CHADS).child(firebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    Chat chad = child.getValue(Chat.class);
-                    if (chad == null) continue;
-
-                    DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chad.getChatId());
-                    ValueEventListener listener = ref.orderByChild("timestamp").startAt(Long.toString(System.currentTimeMillis()/1000)).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            Log.d(TAG, "onDataChange: " + snapshot);
-                            List<Message> messageList = new ArrayList<>();
-
-                            for(DataSnapshot child : snapshot.getChildren()) {
-                                messageList.add(child.getValue(Message.class));
-                            }
-
-                            if (messagesForNotification.getValue() != null) {
-                                messageList.addAll(messagesForNotification.getValue());
-                            }
-                            messagesForNotification.postValue(messageList);
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
-
-                    listeners.put(ref, listener);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+    public void resetUsersCloseTo() {
+        if (geoQuery != null) {
+            geoQuery.removeAllListeners();
+            usersCloseTo = new MutableLiveData<>(new ArrayList<>());
+        }
     }
 }
 
