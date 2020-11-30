@@ -22,14 +22,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ernieandbernie.messenger.Fragtment.ChatListFragtment;
-import com.ernieandbernie.messenger.Fragtment.DetailFragtment;
-import com.ernieandbernie.messenger.Models.Friend;
 import com.ernieandbernie.messenger.R;
 import com.ernieandbernie.messenger.Service.MessengerService;
 import com.ernieandbernie.messenger.Util.Constants;
@@ -45,13 +41,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
 public class FriendListActivity extends AppCompatActivity {
 
     private static final String TAG = "FriendListActivity";
-    private static final String LIST_FRAG = "list_fragment";
-    private static final String DETAIL_FRAG = "detail_fragtment";
+
     private FusedLocationProviderClient fusedLocationProviderClient;
 
 
@@ -59,14 +53,10 @@ public class FriendListActivity extends AppCompatActivity {
     private Button btnProfilePic, btnAddFriends;
     private FriendListViewModel friendListViewModel;
 
-    private ChatListFragtment chatListFragtment;
-    private DetailFragtment detailFragtment;
-    private FragmentTransaction transaction;
 
-    private FrameLayout chatlayout;
-    private RecyclerView chatlist;
-
-
+    public FriendListActivity() {
+        super(R.layout.activity_friendlist);
+    }
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog. Save the return value, an instance of
@@ -118,28 +108,13 @@ public class FriendListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friendlist);
 
-        chatlayout = (FrameLayout)findViewById(R.id.chat_frag);
-        chatlist = (RecyclerView)findViewById(R.id.rcView);
-
         Toolbar myToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         setup();
         updateCurrentUserLocationInDB();
-        openChatFragment(chatListFragtment.newInstance());
+
         if (savedInstanceState == null)
             startService(new Intent(this, MessengerService.class));
-
-
-//       this part makes it crash if i try to unblock it
-//        if(savedInstanceState == null) {
-//            chatListFragtment = new ChatListFragtment();
-//            detailFragtment = new DetailFragtment();
-//
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.rcView, chatListFragtment, LIST_FRAG)
-//                    .replace(R.id.chat_frag, detailFragtment, DETAIL_FRAG)
-//                    .commit();
-//        }
     }
 
     @Override
@@ -262,11 +237,5 @@ public class FriendListActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType(Constants.CONTENT_TYPE_IMAGE);
         pickImageLauncher.launch(intent);
-    }
-
-    public void openChatFragment(Fragment fragment) {
-        transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.chat_frag, fragment);
-        transaction.commit();
     }
 }
