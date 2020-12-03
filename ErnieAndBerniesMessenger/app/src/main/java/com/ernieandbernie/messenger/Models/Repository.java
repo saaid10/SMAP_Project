@@ -356,32 +356,6 @@ public class Repository {
         INSTANCE = null;
     }
 
-
-    /**
-     * Not sure this works as intended. Maybe use function below: setupMessages
-     */
-    public void getMessagesFromChadId(String chadId, DataChangedListener<List<Message>> callback) {
-        DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
-        ValueEventListener listener = ref.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<Message> messageList = new ArrayList<>();
-
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    messageList.add(child.getValue(Message.class));
-                }
-
-                callback.onDataChanged(messageList);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-        listeners.put(ref, listener);
-    }
-
     private void setupMessages(String chadId) {
         currentChadId = chadId;
         DatabaseReference ref = databaseReference.child(Constants.MESSAGES).child(chadId);
